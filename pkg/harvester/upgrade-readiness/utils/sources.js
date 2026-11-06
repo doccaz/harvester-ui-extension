@@ -28,5 +28,6 @@ export const SOURCES = {
 export const METADATA_ONLY_HEADERS = { Accept: 'application/json;as=PartialObjectMetadataList;g=meta.k8s.io;v=v1,application/json' };
 export const EXTRA_SOURCES = {
   planSecrets: { url: `${ K8S }/api/v1/namespaces/fleet-local/secrets?labelSelector=${ encodeURIComponent('rke.cattle.io/machine-name') }`, headers: METADATA_ONLY_HEADERS },
-  pods:        { url: `${ K8S }/api/v1/pods` }
+  pods:        { url: `${ K8S }/api/v1/pods` },
+  jobs:        { url: `${ K8S }/apis/batch/v1/namespaces/harvester-system/jobs?labelSelector=${ encodeURIComponent('harvesterhci.io/upgradeJobType') }` }
 };

@@ -9,6 +9,8 @@ import { useTranslation } from '../utils/i18n';
 import { runChecks } from '../utils/checks';
 import CheckCard from '../components/CheckCard.vue';
 import blocked from '../dev/drift-kubevip-blocked.json';
+import mid from '../dev/mid-upgrade.json';
+import PlanView from '../components/PlanView.vue';
 
 // DEV ONLY (remove before upstream): preview of the chart drift explainer on the saved 2026-11-06 kube-vip blocked state.
 const preview = runChecks({
@@ -117,6 +119,10 @@ onMounted(run);
       Preview: system chart explainer (saved lab state, 2026-11-06 16:27Z)
     </h2>
     <CheckCard :check="preview" />
+    <h2 class="mt-40">
+      Preview: Upgrade Plan during an upgrade (simulated on the lab state)
+    </h2>
+    <PlanView :snap="mid" />
   </div>
 </template>
 

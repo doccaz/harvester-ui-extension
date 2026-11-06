@@ -44,7 +44,7 @@ export function podMemoryRequest(pod) {
 export const TRIM = {
   nodes: (r) => list(r).map((n) => ({
     // Only the machine annotation: node annotations also carry RKE2 command-line args.
-    metadata: { ...meta(n, { labels: true }), annotations: { 'cluster.x-k8s.io/machine': n?.metadata?.annotations?.['cluster.x-k8s.io/machine'] } },
+    metadata: { ...meta(n, { labels: true }), annotations: { 'cluster.x-k8s.io/machine': n?.metadata?.annotations?.['cluster.x-k8s.io/machine'], 'harvesterhci.io/maintain-status': n?.metadata?.annotations?.['harvesterhci.io/maintain-status'] } },
     spec:     { unschedulable: !!n?.spec?.unschedulable },
     status:   { ready: cond(n, 'Ready')?.status || 'Unknown', allocatableMemory: parseBytes(n?.status?.allocatable?.memory) }
   })),
@@ -135,7 +135,25 @@ export const TRIM = {
     status: { nodeName: i?.status?.nodeName || '', phase: i?.status?.phase || '' }
   })),
   // Plan secrets hold join tokens: only their labels are kept (and the page asks the API for metadata only).
-  planSecrets: (r) => list(r).map((x) => ({ metadata: { name: x?.metadata?.name, labels: x?.metadata?.labels || {} } })),
+  planSecrets: (r) => list(r).map((x) => ({
+    metadata: {
+      name:        x?.metadata?.name,
+      labels:      x?.metadata?.labels || {},
+      // Drain hooks only: tells which node Rancher is working on during an upgrade.
+      annotations: Object.fromEntries(Object.entries(x?.metadata?.annotations || {}).filter(([k]) => /^rke\.cattle\.io\/(pre-drain|post-drain|drain-options|uncordon)$|^harvesterhci\.io\/(pre|post)-hook$/.test(k)))
+    }
+  })),
+  jobs: (r) => list(r).map((j) => ({
+    name:      j?.metadata?.name,
+    upgrade:   j?.metadata?.labels?.['harvesterhci.io/upgrade'] || '',
+    type:      j?.metadata?.labels?.['harvesterhci.io/upgradeJobType'] || '',
+    node:      j?.metadata?.labels?.['harvesterhci.io/node'] || '',
+    started:   j?.status?.startTime || j?.metadata?.creationTimestamp || '',
+    active:    j?.status?.active || 0,
+    succeeded: j?.status?.succeeded || 0,
+    failed:    j?.status?.failed || 0,
+    message:   (j?.status?.conditions || []).filter((c) => c.status === 'True').map((c) => c.message || c.reason).filter(Boolean).join('; ')
+  })),
   pods:        (r) => list(r).filter((p) => !['Succeeded', 'Failed'].includes(p?.status?.phase) && p?.spec?.nodeName).map((p) => ({
     namespace: p.metadata.namespace,
     node:      p.spec.nodeName,

@@ -6,6 +6,8 @@ import { location } from '../utils/links';
 import { Banner } from '@components/Banner';
 import { RcSection } from '@components/RcSection';
 import CheckCard from '../components/CheckCard.vue';
+import ChangesSwitch from '../components/ChangesSwitch.vue';
+import ChangedList from '../components/ChangedList.vue';
 import { clusterRequest } from '../utils/cluster';
 import { loadSnapshot } from '../utils/snapshot';
 import { certFromStore, setBlockerCount } from '../utils/blockerCount';
@@ -62,6 +64,8 @@ onMounted(refresh);
     <p class="subtitle text-muted">
       {{ t('harvester.upgradeReadiness.readiness.subtitle') }}
     </p>
+    <ChangesSwitch />
+    <ChangedList />
 
     <div
       role="status"

@@ -1,6 +1,6 @@
 {
  "errors": {},
- "loadedAt": "2026-11-06T18:49:08.586Z",
+ "loadedAt": "2026-11-06T18:56:03.510Z",
  "nodes": [
   {
    "metadata": {
@@ -5863,7 +5863,8 @@
      "rke.cattle.io/machine-name": "custom-0610da1121f5",
      "rke.cattle.io/node-name": "harv01lab",
      "rke.cattle.io/worker-role": "true"
-    }
+    },
+    "annotations": {}
    }
   },
   {
@@ -5881,7 +5882,8 @@
      "rke.cattle.io/machine-name": "custom-947cfec563ba",
      "rke.cattle.io/node-name": "harvlab-witness",
      "rke.cattle.io/worker-role": "true"
-    }
+    },
+    "annotations": {}
    }
   },
   {
@@ -5899,7 +5901,8 @@
      "rke.cattle.io/machine-name": "custom-f9fee6fbccfb",
      "rke.cattle.io/node-name": "harv02lab",
      "rke.cattle.io/worker-role": "true"
-    }
+    },
+    "annotations": {}
    }
   }
  ],
@@ -7153,23 +7156,24 @@
    "vm": null
   }
  ],
+ "jobs": [],
  "kubelet": {
   "harv01lab": {
-   "usedBytes": 134207643648,
+   "usedBytes": 134191480832,
    "capacityBytes": 368766496768,
    "gcHigh": 85
   },
   "harv02lab": {
-   "usedBytes": 148609642496,
+   "usedBytes": 148602753024,
    "capacityBytes": 210241560576,
    "gcHigh": 85
   },
   "harvlab-witness": {
-   "usedBytes": 33233481728,
+   "usedBytes": 33234423808,
    "capacityBytes": 712803852288,
    "gcHigh": 85
   }
  },
  "certNotAfter": "2027-04-30T19:15:43.000Z",
- "now": 1793990948586
+ "now": 1793991363510
 }

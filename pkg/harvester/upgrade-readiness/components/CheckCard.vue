@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import { RcSection, RcSectionBadges } from '@components/RcSection';
 import CopyToClipboard from '@shell/components/CopyToClipboard';
 import ChartDrift from './ChartDrift.vue';
+import ConfirmAction from './ConfirmAction.vue';
 import { useTranslation } from '../utils/i18n';
 import { location } from '../utils/links';
 
@@ -44,7 +45,7 @@ function details(item) {
     parts.push(item.note);
   }
   if (item.replicaNodes?.length) {
-    parts.push(t('harvester.upgradeReadiness.replica.on', { nodes: item.replicaNodes.join(', ') }));
+    parts.push(t('harvester.upgradeReadiness.replica.copyOn', { nodes: item.replicaNodes.join(', ') }));
   }
   if (item.unusedReplicaNodes?.length) {
     parts.push(t('harvester.upgradeReadiness.replica.unused', { nodes: item.unusedReplicaNodes.join(', ') }));
@@ -128,6 +129,13 @@ function details(item) {
                 </td>
                 <td>{{ details(item) }}</td>
                 <td class="tags">
+                  <ConfirmAction
+                    v-for="a in (item.actions || [])"
+                    :key="`${ a.kind }-${ a.target }`"
+                    :kind="a.kind"
+                    :target="a.target"
+                    :label="t(`harvester.upgradeReadiness.action.label.${ a.kind }`)"
+                  />
                   <span
                     v-if="item.attached === false"
                     class="tag"

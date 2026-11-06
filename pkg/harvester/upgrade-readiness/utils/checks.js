@@ -151,7 +151,9 @@ const CHECKS = {
     const active = s.schedules.filter((x) => !x.status.suspended);
 
     return result('schedulesActive', active.length ? 'block' : 'pass', {
-      items: active.map((x) => ({ text: nsName(x), link: link(TYPES.SCHEDULE, x) })),
+      items: active.map((x) => ({
+        text: nsName(x), link: link(TYPES.SCHEDULE, x), actions: [{ kind: 'suspendSchedule', target: nsName(x) }]
+      })),
       fixes: active.length ? [goto('goSchedules', { resource: TYPES.SCHEDULE })] : [],
       args:  { count: active.length }
     });
@@ -203,8 +205,14 @@ const CHECKS = {
         });
       }
       if (n.spec.unschedulable) {
+        // Maintenance mode is ended through Harvester's own dialog (it restores VMs), not by uncordoning.
+        const maintenance = !!n.metadata.annotations?.['harvesterhci.io/maintain-status'];
+
         items.push({
-          text: n.metadata.name, note: 'cordoned / maintenance mode', link: { resource: TYPES.HOST, id: n.metadata.name }
+          text:    n.metadata.name,
+          note:    maintenance ? 'maintenance mode' : 'cordoned',
+          link:    { resource: TYPES.HOST, id: n.metadata.name },
+          actions: maintenance ? [] : [{ kind: 'uncordon', target: n.metadata.name }]
         });
       }
     });
@@ -288,7 +296,7 @@ const CHECKS = {
 
     // With the dialog's skip option only attached volumes block; without it, all do.
     return result('singleReplica', attached.length ? 'block' : (detached.length ? 'warn' : 'pass'), {
-      items: [...attached.map((v) => ({ ...item(v), attached: true })), ...detached.map((v) => ({ ...item(v), attached: false }))],
+      items: [...attached.map((v) => ({ ...item(v), attached: true })).map((i) => (i.link?.resource === TYPES.VM ? { ...i, actions: [{ kind: 'stopVM', target: i.text }] } : i)), ...detached.map((v) => ({ ...item(v), attached: false }))],
       fixes: [
         ...(attached.length ? [goto('goVms', { resource: TYPES.VM })] : []),
         ...(detached.length ? [{ kind: 'option', labelKey: 'optionSkipDetached' }] : [])
@@ -306,7 +314,7 @@ const CHECKS = {
     if (nw.length === 1) {
       return result('nonMigratable', 'skip', { args: { reason: 'single' } });
     }
-    const items = nonMigratableItems(s, nw);
+    const items = nonMigratableItems(s, nw).map((i) => ({ ...i, actions: [{ kind: 'stopVM', target: i.text }] }));
 
     return result('nonMigratable', items.length ? 'block' : 'pass', { items });
   }),
@@ -328,7 +336,7 @@ const CHECKS = {
       }));
     });
 
-    return result('hotplug', items.length ? 'block' : 'pass', { items });
+    return result('hotplug', items.length ? 'block' : 'pass', { items: items.map((i) => ({ ...i, actions: [{ kind: 'restartVM', target: i.text }] })) });
   }),
 
   certExpiry: (s) => guarded('certExpiry', s, ['certNotAfter'], () => {

@@ -1224,7 +1224,7 @@ harvester:
       probe: API Probe
     readiness:
       title: Upgrade blockers
-      subtitle: 'Every check the upgrade runs, at once. Read-only.'
+      subtitle: 'Every check the upgrade runs, at once.'
       updated: 'Checked at {time}'
       checking: Checking...
       recheck: Check again
@@ -1245,7 +1245,7 @@ harvester:
     showMore: 'Show {n} more'
     showLess: Show less
     replica:
-      on: 'copy on {nodes}'
+      copyOn: 'copy on {nodes}'
       stuck: 'stuck replica on {nodes}'
       unused: 'copy on {nodes}, never attached'
       stuckHint: 'The extra replica on {node} never finished rebuilding (Longhorn gave up after {retries} tries). It is not a usable copy, and Longhorn keeps retrying it. Delete that replica (the healthy copy stays). To report it to Longhorn, take a support bundle first.'
@@ -1265,6 +1265,42 @@ harvester:
         ok: no problem expected
         action: Action needed
         stall: Likely to stall here
+      live:
+        title: 'Upgrade {name} to {to} is running ({state}).'
+        phases: Upgrade phases
+        notStarted: Not started
+        migrating: 'Moving now: {vms}.'
+        job: '{type} job: {state}. Log:'
+        phase:
+          ImageReady: Image
+          RepoReady: Repository
+          NodesPrepared: Images on nodes
+          SystemServicesUpgraded: System services
+          NodesUpgraded: Nodes
+          Completed: Done
+        phaseStatus:
+          done: done
+          running: in progress
+          failed: failed
+          pending: not started
+        jobState:
+          running: running
+          succeeded: succeeded
+          failed: failed
+          pending: pending
+        why:
+          notStarted: 'Not reached yet.'
+          preloading: 'Downloading the upgrade images to this node.'
+          waitingTurn: 'Waiting for its turn: Rancher upgrades one node at a time.'
+          rancherDraining: 'Rancher is draining this node.'
+          paused: 'Waiting for you: resume it in the upgrade dialog. {message}'
+          preDraining: 'Moving its VMs off (pre-drain job). If this takes long, a VM may not fit elsewhere.'
+          preDrained: 'VMs moved; Rancher is upgrading the node.'
+          postDraining: 'Upgrading the operating system (post-drain job).'
+          rebooting: 'Rebooting into the new version.'
+          done: 'Upgraded.'
+          failed: 'Failed: {message}'
+          other: '{message}'
       changePause: Change pause settings
       stepNo: 'Step {n}:'
       mode:
@@ -1336,6 +1372,40 @@ harvester:
         singleNode: 'Single node: {node}'
         none: Defaults
       footnote: 'Harvester does not keep durations, logs or jobs after an upgrade; only these records.'
+    changes:
+      label: Allow changes from these pages
+      disabledHint: 'Read-only. Turn on to stop VMs, suspend schedules, uncordon nodes or hold and release nodes from here (each asks first).'
+      enabledHint: 'On for this browser tab until you reload. Every change asks for confirmation and uses the same API as the Harvester UI.'
+    action:
+      confirmButton: Confirm
+      cancel: Cancel
+      running: Working...
+      done: Done
+      failed: 'Failed: {error}'
+      label:
+        stopVM: Stop VM
+        startVM: Start VM
+        restartVM: Restart VM
+        suspendSchedule: Suspend
+        resumeSchedule: Resume schedule
+        uncordon: Uncordon
+        holdNode: Hold before this node
+        releaseNode: Release
+      confirm:
+        stopVM: 'Stop {target}?'
+        startVM: 'Start {target}?'
+        restartVM: 'Restart {target}?'
+        suspendSchedule: 'Suspend schedule {target}?'
+        resumeSchedule: 'Resume schedule {target}?'
+        uncordon: 'Uncordon {target}?'
+        holdNode: 'Make the upgrade wait before {target}?'
+        releaseNode: 'Let the upgrade continue with {target}?'
+    changed:
+      title: Changed from these pages
+      subtitle: 'Undo these after the upgrade. Kept in this browser only.'
+      stopVM: 'Stopped {target}'
+      suspendSchedule: 'Suspended schedule {target}'
+      forget: Forget
     drift:
       fresh:
         known: 'Fleet last tried at {last} ({outcome}); next try around {next}.'
