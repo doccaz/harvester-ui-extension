@@ -1,6 +1,6 @@
 <script setup>
 import { changes } from '../utils/actions';
-import { useTranslation } from '../utils/i18n';
+import { useTranslation } from '../../utils/use-translation';
 import InfoTip from './InfoTip.vue';
 
 // Per-session switch for the few writes these pages offer. Off by default and after every reload.

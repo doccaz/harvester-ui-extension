@@ -1,5 +1,5 @@
 import lab from './fixtures/lab-2026-11-06.json';
-import mid from '../dev/mid-upgrade.json';
+import mid from './fixtures/mid-upgrade.json';
 import { jobLogCommand, liveStatus } from '../utils/live';
 
 const clone = (o) => JSON.parse(JSON.stringify(o));

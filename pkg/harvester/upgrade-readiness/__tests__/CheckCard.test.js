@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils';
 import lab from './fixtures/lab-2026-11-06.json';
-import blocked from '../dev/drift-kubevip-blocked.json';
+import blocked from './fixtures/drift-kubevip-blocked.json';
 import { runChecks } from '../utils/checks';
 import CheckCard from '../components/CheckCard.vue';
 import InfoTip from '../components/InfoTip.vue';

@@ -1,4 +1,4 @@
-import { clusterRequest } from './cluster';
+import { clusterRequest } from '../../utils/cluster-request';
 import { loadSnapshot, SERVING_CERT_ID } from './snapshot';
 import { runChecks } from './checks';
 import { menuCount } from './menuCount';

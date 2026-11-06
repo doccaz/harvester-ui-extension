@@ -1,4 +1,4 @@
-import blocked from '../dev/drift-kubevip-blocked.json';
+import blocked from './fixtures/drift-kubevip-blocked.json';
 import {
   apiPath, describeLive, explainChart, fixCommands, fleetAttempts, fleetErrors, freshness, managersOf, ownerOf, patchPaths
 } from '../utils/drift';

@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import CopyToClipboard from '@shell/components/CopyToClipboard';
-import { useTranslation } from '../utils/i18n';
+import { useTranslation } from '../../utils/use-translation';
 
 // Why one ManagedChart is not ready, from Fleet's own records. Read-only: fixes are commands the user copies.
 const props = defineProps({

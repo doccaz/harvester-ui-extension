@@ -4,10 +4,10 @@ import {
 } from 'vue';
 import { useStore } from 'vuex';
 import PlanView from '../components/PlanView.vue';
-import { clusterRequest } from '../utils/cluster';
+import { clusterRequest } from '../../utils/cluster-request';
 import { loadSnapshot } from '../utils/snapshot';
 import { liveStatus } from '../utils/live';
-import { useTranslation } from '../utils/i18n';
+import { useTranslation } from '../../utils/use-translation';
 
 // "Upgrade plan" page: loads the snapshot (GETs only) and, while an upgrade runs, refreshes it every 15 s.
 const t = useTranslation();

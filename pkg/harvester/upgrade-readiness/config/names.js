@@ -16,8 +16,5 @@ export const PAGES = {
   },
   history: {
     type: 'upgrade-readiness-history', path: 'upgrade-readiness/history', route: route('-history'), weight: 2, labelKey: 'harvester.upgradeReadiness.nav.history'
-  },
-  probe: {
-    type: 'upgrade-readiness-probe', path: 'upgrade-readiness/probe', route: route('-probe'), weight: 1, labelKey: 'harvester.upgradeReadiness.nav.probe'
   }
 };

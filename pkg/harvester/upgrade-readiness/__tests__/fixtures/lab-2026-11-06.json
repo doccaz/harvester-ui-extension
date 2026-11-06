@@ -2331,7 +2331,7 @@
     "robustness": "unknown",
     "kubernetesStatus": {
      "namespace": "labs",
-     "pvcName": "bastion-galins-server-disk-1-9xheg"
+     "pvcName": "bastion-server-disk-1-9xheg"
     }
    }
   },
@@ -5153,14 +5153,14 @@
   },
   {
    "metadata": {
-    "name": "bastion-galins-server",
+    "name": "bastion-server",
     "namespace": "labs"
    },
    "spec": {
     "volumes": [
      {
       "name": "disk-1",
-      "claim": "bastion-galins-server-disk-1-9xheg"
+      "claim": "bastion-server-disk-1-9xheg"
      },
      {
       "name": "cloudinitdisk",

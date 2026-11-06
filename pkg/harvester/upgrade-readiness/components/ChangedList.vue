@@ -1,6 +1,6 @@
 <script setup>
 import { changed, changes, forget } from '../utils/actions';
-import { useTranslation } from '../utils/i18n';
+import { useTranslation } from '../../utils/use-translation';
 import ConfirmAction from './ConfirmAction.vue';
 
 // What was changed from these pages and should be undone after the upgrade (kept in this browser only).

@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils';
 import lab from './fixtures/lab-2026-11-06.json';
-import mid from '../dev/mid-upgrade.json';
+import mid from './fixtures/mid-upgrade.json';
 import PlanView from '../components/PlanView.vue';
 import InfoTip from '../components/InfoTip.vue';
 

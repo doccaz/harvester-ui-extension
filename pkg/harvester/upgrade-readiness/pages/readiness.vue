@@ -8,11 +8,11 @@ import { RcSection } from '@components/RcSection';
 import CheckCard from '../components/CheckCard.vue';
 import ChangesSwitch from '../components/ChangesSwitch.vue';
 import ChangedList from '../components/ChangedList.vue';
-import { clusterRequest } from '../utils/cluster';
+import { clusterRequest } from '../../utils/cluster-request';
 import { loadSnapshot } from '../utils/snapshot';
 import { certFromStore, setBlockerCount } from '../utils/blockerCount';
 import { runChecks, verdict } from '../utils/checks';
-import { useTranslation } from '../utils/i18n';
+import { useTranslation } from '../../utils/use-translation';
 import InfoTip from '../components/InfoTip.vue';
 
 // "Upgrade blockers": every check of Harvester's upgrade webhook, all at once. Read-only (GETs only).

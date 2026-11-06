@@ -2,11 +2,11 @@
 import { onMounted, reactive, ref } from 'vue';
 import { useStore } from 'vuex';
 import { Banner } from '@components/Banner';
-import { clusterRequest } from '../utils/cluster';
+import { clusterRequest } from '../../utils/cluster-request';
 import { SOURCES } from '../utils/sources';
 import { TRIM } from '../utils/trim';
 import { historyRows } from '../utils/history';
-import { useTranslation } from '../utils/i18n';
+import { useTranslation } from '../../utils/use-translation';
 import InfoTip from '../components/InfoTip.vue';
 import { setHistoryCount } from '../utils/blockerCount';
 

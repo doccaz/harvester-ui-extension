@@ -8,7 +8,7 @@ import { useRoute } from 'vue-router';
 import { Banner } from '@components/Banner';
 import { runChecks } from '../utils/checks';
 import { moveLoad, pausePlan, planNotes, predictOrder } from '../utils/plan';
-import { useTranslation } from '../utils/i18n';
+import { useTranslation } from '../../utils/use-translation';
 import { jobLogCommand, liveStatus } from '../utils/live';
 import { HARVESTER_PRODUCT, PAGES } from '../config/names';
 

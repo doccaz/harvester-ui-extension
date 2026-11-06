@@ -6,7 +6,7 @@ import CopyToClipboard from '@shell/components/CopyToClipboard';
 import ChartDrift from './ChartDrift.vue';
 import ConfirmAction from './ConfirmAction.vue';
 import InfoTip from './InfoTip.vue';
-import { useTranslation } from '../utils/i18n';
+import { useTranslation } from '../../utils/use-translation';
 import { location } from '../utils/links';
 
 // One pre-flight finding. Collapsed: title, count, status. Open: the objects, what to do, fixes; the "why" sits behind

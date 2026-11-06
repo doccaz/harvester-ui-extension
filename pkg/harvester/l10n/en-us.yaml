@@ -1221,7 +1221,6 @@ harvester:
       readiness: Blockers
       plan: Upgrade Plan
       history: Upgrade History
-      probe: API Probe
     readiness:
       title: Upgrade blockers
       subtitle: 'Every check the upgrade runs, at once.'
@@ -1597,18 +1596,6 @@ harvester:
         ok: 'Certificates are valid until {date} ({days} days).'
         why: 'Certificates expire on {date} ({days} days); the upgrade needs at least 7 days.'
         do: 'Rotate the RKE2 certificates first.'
-    probe:
-      title: Upgrade readiness - API probe
-      subtitle: Checks that every read the upgrade pages need works with your session. It only reads; nothing is changed.
-      running: Running...
-      rerun: Run again
-      summary: '{ok} of {total} reads work.'
-      col:
-        result: Result
-        probe: Read
-        need: Needed for
-        detail: Detail
-
   schedule:
     label: Virtual Machine Schedules
     createTitle: Create Schedule

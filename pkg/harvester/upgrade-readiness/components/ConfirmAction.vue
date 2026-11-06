@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import { useStore } from 'vuex';
 import { changes, runAction } from '../utils/actions';
-import { useTranslation } from '../utils/i18n';
+import { useTranslation } from '../../utils/use-translation';
 
 // One write, in two steps: the button, then "Confirm / Cancel" naming what will happen. Shown only when changes are allowed.
 const props = defineProps({
