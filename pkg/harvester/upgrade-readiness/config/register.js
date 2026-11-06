@@ -1,6 +1,6 @@
 import { markRaw } from 'vue';
 import { GROUP, HARVESTER_PRODUCT, NAV_GROUP, PAGES } from './names';
-import { blockerCountGetter } from '../utils/blockerCount';
+import { blockerCountGetter, historyCountGetter } from '../utils/blockerCount';
 
 /**
  * Adds Advanced > Upgrade readiness to the Harvester side menu. Takes `$plugin` and `store` and builds its own DSL,
@@ -28,4 +28,6 @@ export function registerUpgradeReadiness($plugin, store) {
   setGroupDefaultType(GROUP, PAGES.readiness.type);
   // Blocker count next to "Blockers" in the menu (same mechanism Rancher uses for its cluster count).
   configureType(PAGES.readiness.type, { custom: { countGetter: markRaw(blockerCountGetter(store)) } });
+  // Number of past upgrade records next to "History".
+  configureType(PAGES.history.type, { custom: { countGetter: markRaw(historyCountGetter(store)) } });
 }

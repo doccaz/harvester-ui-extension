@@ -7,6 +7,8 @@ import { SOURCES } from '../utils/sources';
 import { TRIM } from '../utils/trim';
 import { historyRows } from '../utils/history';
 import { useTranslation } from '../utils/i18n';
+import InfoTip from '../components/InfoTip.vue';
+import { setHistoryCount } from '../utils/blockerCount';
 
 // Past upgrades, from the Upgrade records Harvester keeps. Read-only.
 const t = useTranslation();
@@ -31,6 +33,7 @@ async function refresh() {
     ]);
 
     rows.value = historyRows(TRIM.upgrades(upgrades), TRIM.images(images));
+    setHistoryCount(rows.value.length);
   } catch (e) {
     error.value = e?.message || String(e);
   } finally {
@@ -56,6 +59,10 @@ onMounted(refresh);
     </header>
     <p class="subtitle text-muted">
       {{ k('subtitle') }}
+      <InfoTip
+        :text="k('footnote')"
+        :label="k('footnoteLabel')"
+      />
     </p>
 
     <Banner
@@ -161,10 +168,6 @@ onMounted(refresh);
         </template>
       </tbody>
     </table>
-
-    <p class="text-muted footnote">
-      {{ k('footnote') }}
-    </p>
   </div>
 </template>
 
@@ -187,6 +190,5 @@ onMounted(refresh);
 .details dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0; }
 .details dt { font-weight: 600; }
 .details dd { margin: 0; }
-.footnote { margin-top: 16px; font-size: 13px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 </style>

@@ -1,6 +1,7 @@
 <script setup>
 import { changes } from '../utils/actions';
 import { useTranslation } from '../utils/i18n';
+import InfoTip from './InfoTip.vue';
 
 // Per-session switch for the few writes these pages offer. Off by default and after every reload.
 const t = useTranslation();
@@ -18,7 +19,10 @@ const t = useTranslation();
       >
       {{ t('harvester.upgradeReadiness.changes.label') }}
     </label>
-    <span class="hint">{{ t(changes.allowed ? 'harvester.upgradeReadiness.changes.enabledHint' : 'harvester.upgradeReadiness.changes.disabledHint') }}</span>
+    <InfoTip
+      :text="t(changes.allowed ? 'harvester.upgradeReadiness.changes.enabledHint' : 'harvester.upgradeReadiness.changes.disabledHint')"
+      :label="t('harvester.upgradeReadiness.changes.label')"
+    />
   </div>
 </template>
 

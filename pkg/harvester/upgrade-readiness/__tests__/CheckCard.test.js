@@ -3,6 +3,7 @@ import lab from './fixtures/lab-2026-11-06.json';
 import blocked from '../dev/drift-kubevip-blocked.json';
 import { runChecks } from '../utils/checks';
 import CheckCard from '../components/CheckCard.vue';
+import InfoTip from '../components/InfoTip.vue';
 
 // The i18n getter (used by script code) echoes key + args; template `t` comes from jest.setup's global mock (%key%).
 jest.mock('vuex', () => ({ useStore: () => ({ getters: { 'i18n/t': (key, args) => `${ key }${ args ? JSON.stringify(args) : '' }` } }) }));
@@ -76,5 +77,26 @@ describe('checkCard', () => {
     expect(w.findAll('.fields tbody tr')).toHaveLength(1);
     expect(w.text()).toContain('drift.stale');
     expect(w.findAll('.drift-row')).toHaveLength(2);
+  });
+
+  it('keeps the explanations in info bubbles, each with an accessible name', () => {
+    const w = render(results.singleReplica);
+    const tips = w.findAllComponents(InfoTip);
+
+    expect(tips.map((c) => c.props('text'))).toStrictEqual(expect.arrayContaining([
+      expect.stringContaining('check.singleReplica.why'),
+      expect.stringContaining('replica.stuckWhy')
+    ]));
+    tips.forEach((c) => {
+      expect(c.find('button').attributes('aria-label')).toBeTruthy();
+      expect(c.find('button').attributes('aria-describedby')).toBeTruthy();
+    });
+    expect(w.find('details.why').exists()).toBe(false);
+  });
+
+  it('shows no "why" bubble on a passing check', () => {
+    const pass = Object.values(results).find((c) => c.status === 'pass' && !c.items.length);
+
+    expect(render(pass).findAllComponents(InfoTip)).toHaveLength(0);
   });
 });

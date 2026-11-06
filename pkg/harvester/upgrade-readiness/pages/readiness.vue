@@ -13,6 +13,7 @@ import { loadSnapshot } from '../utils/snapshot';
 import { certFromStore, setBlockerCount } from '../utils/blockerCount';
 import { runChecks, verdict } from '../utils/checks';
 import { useTranslation } from '../utils/i18n';
+import InfoTip from '../components/InfoTip.vue';
 
 // "Upgrade blockers": every check of Harvester's upgrade webhook, all at once. Read-only (GETs only).
 const t = useTranslation();
@@ -63,6 +64,10 @@ onMounted(refresh);
     </header>
     <p class="subtitle text-muted">
       {{ t('harvester.upgradeReadiness.readiness.subtitle') }}
+      <InfoTip
+        :text="t('harvester.upgradeReadiness.readiness.footnote')"
+        :label="t('harvester.upgradeReadiness.readiness.footnoteLabel')"
+      />
     </p>
     <ChangesSwitch />
     <ChangedList />
@@ -128,10 +133,6 @@ onMounted(refresh);
         </li>
       </ul>
     </RcSection>
-
-    <p class="text-muted footnote">
-      {{ t('harvester.upgradeReadiness.readiness.footnote') }}
-    </p>
   </div>
 </template>
 
@@ -145,5 +146,4 @@ onMounted(refresh);
   list-style: none; padding: 0; margin: 0;
   li { display: flex; gap: 10px; align-items: baseline; padding: 4px 0; flex-wrap: wrap; }
 }
-.footnote { margin-top: 24px; font-size: 13px; }
 </style>

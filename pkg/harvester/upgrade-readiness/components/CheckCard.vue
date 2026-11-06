@@ -5,6 +5,7 @@ import { RcSection, RcSectionBadges } from '@components/RcSection';
 import CopyToClipboard from '@shell/components/CopyToClipboard';
 import ChartDrift from './ChartDrift.vue';
 import ConfirmAction from './ConfirmAction.vue';
+import InfoTip from './InfoTip.vue';
 import { useTranslation } from '../utils/i18n';
 import { location } from '../utils/links';
 
@@ -153,7 +154,11 @@ function details(item) {
               >
                 <td :colspan="item.disk !== undefined ? 4 : 3">
                   <p class="hint">
-                    {{ t('harvester.upgradeReadiness.replica.stuckHint', { node: sr.node, retries: sr.retries }) }}
+                    {{ t('harvester.upgradeReadiness.replica.stuckHint', { node: sr.node }) }}
+                    <InfoTip
+                      :text="t('harvester.upgradeReadiness.replica.stuckWhy', { retries: sr.retries })"
+                      :label="t('harvester.upgradeReadiness.why')"
+                    />
                   </p>
                   <div class="fixes">
                     <a
@@ -195,6 +200,10 @@ function details(item) {
           class="do"
         >
           {{ t(k('do'), check.args) }}
+          <InfoTip
+            :text="t(k('why'), check.args)"
+            :label="t('harvester.upgradeReadiness.why')"
+          />
         </p>
 
         <div
@@ -245,14 +254,6 @@ function details(item) {
             {{ t(`harvester.upgradeReadiness.fix.${ f.labelKey }`) }}
           </router-link>
         </div>
-
-        <details
-          v-if="check.status !== 'pass'"
-          class="why"
-        >
-          <summary>{{ t('harvester.upgradeReadiness.why') }}</summary>
-          <p>{{ t(k('why'), check.args) }}</p>
-        </details>
       </template>
     </div>
   </RcSection>
@@ -280,7 +281,6 @@ function details(item) {
 .fixes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .copy { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; code { padding: 2px 6px; } }
 .option { margin: 4px 0; padding: 6px 10px; border-left: 3px solid var(--info); width: 100%; }
-.why { margin-top: 8px; summary { cursor: pointer; color: var(--link); } p { margin: 6px 0 0; } }
 .more { padding-left: 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 </style>

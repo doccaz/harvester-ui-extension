@@ -1233,6 +1233,7 @@ harvester:
       also: '{warn} warning(s), {unknown} not checked'
       passed: '{n} checks passed or skipped'
       footnote: 'Same rules as the Harvester v1.8.2 upgrade. Certificate expiry is approximate (RKE2 serving certificate).'
+      footnoteLabel: About these checks
     status:
       block: Blocks
       warn: Warning
@@ -1248,7 +1249,8 @@ harvester:
       copyOn: 'copy on {nodes}'
       stuck: 'stuck replica on {nodes}'
       unused: 'copy on {nodes}, never attached'
-      stuckHint: 'The extra replica on {node} never finished rebuilding (Longhorn gave up after {retries} tries). It is not a usable copy, and Longhorn keeps retrying it. Delete that replica (the healthy copy stays). To report it to Longhorn, take a support bundle first.'
+      stuckHint: 'The replica on {node} never finished rebuilding. Delete it; the healthy copy stays.'
+      stuckWhy: 'Longhorn gave up after {retries} tries but keeps retrying, so it is not a usable copy. To report it to Longhorn, take a support bundle first.'
       openLonghorn: Open in Longhorn
       detached: detached
     plan:
@@ -1302,6 +1304,7 @@ harvester:
           failed: 'Failed: {message}'
           other: '{message}'
       changePause: Change pause settings
+      pauseInfo: About pause settings
       stepNo: 'Step {n}:'
       mode:
         auto: 'Automatic: each node is upgraded right after the previous one; the upgrade never waits for you.'
@@ -1372,6 +1375,7 @@ harvester:
         singleNode: 'Single node: {node}'
         none: Defaults
       footnote: 'Harvester does not keep durations, logs or jobs after an upgrade; only these records.'
+      footnoteLabel: What is kept
     changes:
       label: Allow changes from these pages
       disabledHint: 'Read-only. Turn on to stop VMs, suspend schedules, uncordon nodes or hold and release nodes from here (each asks first).'

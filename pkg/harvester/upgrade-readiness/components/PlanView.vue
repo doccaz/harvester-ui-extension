@@ -3,6 +3,7 @@ import { computed, toRef } from 'vue';
 import CopyToClipboard from '@shell/components/CopyToClipboard';
 import ConfirmAction from './ConfirmAction.vue';
 import ChangesSwitch from './ChangesSwitch.vue';
+import InfoTip from './InfoTip.vue';
 import { useRoute } from 'vue-router';
 import { Banner } from '@components/Banner';
 import { runChecks } from '../utils/checks';
@@ -24,7 +25,8 @@ const gib = (b) => (b / GIB).toFixed(1);
 const missing = computed(() => ['machines', 'planSecrets', 'nodes', 'upgradeConfig', 'upgrades'].filter((key) => snap.value?.errors?.[key]));
 const order = computed(() => (snap.value && !missing.value.length ? predictOrder(snap.value.machines, snap.value.planSecrets, snap.value.nodes) : []));
 const pause = computed(() => (snap.value && !missing.value.length ? pausePlan(snap.value.upgradeConfig, snap.value.nodes, snap.value.upgrades) : null));
-const notes = computed(() => (pause.value ? planNotes(order.value, pause.value) : []));
+// "Read at start" is shown as an info bubble on the pause banner instead.
+const notes = computed(() => (pause.value ? planNotes(order.value, pause.value).filter((n) => n.key !== 'readAtStart') : []));
 // VMs that cannot live-migrate are shut down, not moved: same rule as the pre-flight check.
 const stay = computed(() => new Set(snap.value ? (runChecks(snap.value).find((c) => c.id === 'nonMigratable')?.items || []).map((i) => i.text) : []));
 const load = computed(() => (snap.value?.pods && snap.value?.nodes ? moveLoad(snap.value.nodes, snap.value.pods, stay.value) : null));
@@ -168,35 +170,48 @@ const jobState = (j) => (j.failed ? 'failed' : (j.succeeded ? 'succeeded' : (j.a
         </div>
       </div>
 
-      <ol
+      <div
         v-if="!live"
-        class="track"
-        :aria-label="k('track')"
+        class="track-line"
       >
-        <li class="ok">
-          <span class="dot">0</span>
-          <span class="name">{{ k('services.short') }}</span>
-        </li>
-        <li
-          v-for="e in order"
-          :key="e.node"
-          :class="stepState(e.node)"
+        <ol
+          class="track"
+          :aria-label="k('track')"
         >
-          <span class="dot">
-            <i
-              class="icon"
-              :class="STEP_ICON[stepState(e.node)]"
-              aria-hidden="true"
-            />
-          </span>
-          <span class="name">{{ e.position }}. {{ e.node }}</span>
-          <span class="sr-only">{{ k(`state.${ stepState(e.node) }`) }}</span>
-        </li>
-      </ol>
+          <li class="ok">
+            <span class="dot">0</span>
+            <span class="name">{{ k('services.short') }}</span>
+          </li>
+          <li
+            v-for="e in order"
+            :key="e.node"
+            :class="stepState(e.node)"
+          >
+            <span class="dot">
+              <i
+                class="icon"
+                :class="STEP_ICON[stepState(e.node)]"
+                aria-hidden="true"
+              />
+            </span>
+            <span class="name">{{ e.position }}. {{ e.node }}</span>
+            <span class="sr-only">{{ k(`state.${ stepState(e.node) }`) }}</span>
+          </li>
+        </ol>
+        <InfoTip
+          :text="k('why.text')"
+          :label="k('why.summary')"
+        />
+      </div>
 
       <div>
         <Banner :color="pause.mode === 'manual' ? 'info' : 'secondary'">
           <span>{{ bannerText }}</span>
+          <InfoTip
+            v-if="pause.source === 'setting' && pause.mode === 'manual'"
+            :text="k('note.readAtStart')"
+            :label="k('pauseInfo')"
+          />
           <router-link
             v-if="pause.source === 'setting'"
             class="ml-10"
@@ -225,10 +240,13 @@ const jobState = (j) => (j.failed ? 'failed' : (j.succeeded ? 'succeeded' : (j.a
             aria-hidden="true"
           >0</span>
           <div class="body">
-            <h2>{{ k('services.title') }}</h2>
-            <p class="text-muted">
-              {{ k('services.text') }}
-            </p>
+            <h2>
+              {{ k('services.title') }}
+              <InfoTip
+                :text="k('services.text')"
+                :label="k('services.title')"
+              />
+            </h2>
           </div>
         </li>
         <li
@@ -339,11 +357,6 @@ const jobState = (j) => (j.failed ? 'failed' : (j.succeeded ? 'succeeded' : (j.a
           </div>
         </li>
       </ol>
-
-      <details class="why">
-        <summary>{{ k('why.summary') }}</summary>
-        <p>{{ k('why.text') }}</p>
-      </details>
     </template>
   </div>
 </template>
@@ -381,6 +394,7 @@ const jobState = (j) => (j.failed ? 'failed' : (j.succeeded ? 'succeeded' : (j.a
   &.fail .icon { color: var(--error); }
   .reasons { margin: 4px 0 0; padding-left: 18px; font-size: 14px; }
 }
+.track-line { display: flex; align-items: center; gap: 4px; margin: 4px 0 16px; .track { margin: 0; } }
 .track {
   display: flex; flex-wrap: wrap; list-style: none; padding: 0; margin: 4px 0 16px; gap: 0;
   li { display: flex; align-items: center; gap: 6px; padding-right: 28px; position: relative; }
@@ -411,6 +425,5 @@ const jobState = (j) => (j.failed ? 'failed' : (j.succeeded ? 'succeeded' : (j.a
 .live-state { margin-right: 6px; border-color: var(--info); font-weight: 600; &.done { border-color: var(--success); } &.failed { border-color: var(--error); } &.paused { border-color: var(--warning); } }
 .copy { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; code { padding: 2px 6px; } }
 .problem { padding-left: 8px; border-left: 3px solid var(--error); &.warn { border-left-color: var(--warning); } }
-.why { margin-top: 16px; summary { cursor: pointer; color: var(--link); } p { margin: 6px 0 0; } }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 </style>

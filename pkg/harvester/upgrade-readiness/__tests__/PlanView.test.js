@@ -2,6 +2,7 @@ import { mount } from '@vue/test-utils';
 import lab from './fixtures/lab-2026-11-06.json';
 import mid from '../dev/mid-upgrade.json';
 import PlanView from '../components/PlanView.vue';
+import InfoTip from '../components/InfoTip.vue';
 
 jest.mock('vuex', () => ({ useStore: () => ({ getters: { 'i18n/t': (key, args) => `${ key }${ args ? JSON.stringify(args) : '' }` } }) }));
 jest.mock('vue-router', () => ({ useRoute: () => ({ params: { cluster: 'local' } }) }));
@@ -37,5 +38,22 @@ describe('planView', () => {
     expect(row01.text()).toContain('live.migrating');
     expect(row01.find('.copy code').text()).toBe('kubectl -n harvester-system logs job/hvst-upgrade-new-pre-drain-harv01lab --all-containers');
     expect(row('harv02lab').find('.live-state').classes()).toContain('paused');
+  });
+
+  it('moves "why this order" and the services text into info bubbles', () => {
+    const w = render(lab);
+    const texts = w.findAllComponents(InfoTip).map((c) => c.props('text'));
+
+    expect(texts).toStrictEqual(expect.arrayContaining([expect.stringContaining('plan.why.text'), expect.stringContaining('plan.services.text')]));
+    expect(w.find('details.why').exists()).toBe(false);
+  });
+
+  it('manual pauses: "read at start" is a bubble on the pause banner, not a note line', () => {
+    const manual = { ...lab, upgradeConfig: { value: JSON.stringify({ nodeUpgradeOption: { strategy: { mode: 'manual', pauseNodes: ['harv02lab'] } } }) } };
+    const w = render(manual);
+
+    expect(w.find('.banner').findComponent(InfoTip).props('text')).toContain('plan.note.readAtStart');
+    expect(w.find('.notes').text()).toContain('note.runsUntil');
+    expect(w.find('.notes').text()).not.toContain('note.readAtStart');
   });
 });
