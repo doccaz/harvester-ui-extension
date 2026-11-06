@@ -1,18 +1,16 @@
 <script setup>
 import {
-  computed, nextTick, onMounted, ref, watch
+  computed, onBeforeUnmount, onMounted, ref, watch
 } from 'vue';
 import { useStore } from 'vuex';
 import { Banner } from '@components/Banner';
 import LabeledSelect from '@shell/components/form/LabeledSelect.vue';
 import SortableTable from '@shell/components/SortableTable';
 import { useTranslation } from '../utils/i18n';
-import { clusterRequest } from '../utils/cluster';
 import { simulate } from '../utils/simulate';
-import {
-  buildManifest, buildPolicyYaml, cleanupCommand, compare, createCommand, isAllowedChoice
-} from '../utils/dryrun';
-import { loadDryRun, loadNamespaces } from '../utils/api';
+import { buildPolicyYaml } from '../utils/dryrun';
+import { loadNamespaces } from '../utils/api';
+import { useDryRun } from '../utils/useDryRun';
 import NodeBeforeAfter from './NodeBeforeAfter.vue';
 import StepHeader from './StepHeader.vue';
 import InfoTip from './InfoTip.vue';
@@ -21,11 +19,11 @@ import { simulateRange } from '../utils/range';
 import { invalidNamespaces, namespaceOptions, sameSet } from '../utils/namespaces';
 import { formatBytes, formatCores } from '../utils/format';
 const props = defineProps({
-  nodes:     { type: Array, required: true },
-  pods:      { type: Array, required: true },
-  policy:    { type: Object, default: null },
-  policyRaw: { type: String, default: null },
-  image:     { type: String, default: null }
+  nodes:      { type: Array, required: true },
+  pods:       { type: Array, required: true },
+  policy:     { type: Object, default: null },
+  policyRaw:  { type: String, default: null },
+  deployment: { type: Object, default: null }
 });
 const t = useTranslation();
 const store = useStore();
@@ -61,7 +59,7 @@ const nsFailed = ref(false);
 
 onMounted(async() => {
   try {
-    clusterNamespaces.value = await loadNamespaces(clusterRequest(store));
+    clusterNamespaces.value = await loadNamespaces(store);
   } catch (e) {
     nsFailed.value = true;
   }
@@ -101,11 +99,22 @@ function runSimulation(f, order) {
 }
 const sim = computed(() => runSimulation(form.value));
 // One run is only ONE possible outcome: equal VMs are tried in no particular order. The range says what else can happen.
+// It costs up to 200 simulation runs, so it is computed once the values have stopped changing, not on every keystroke.
+const settledForm = ref(null);
+let settleTimer;
+
+watch(form, (f) => {
+  clearTimeout(settleTimer);
+  settleTimer = setTimeout(() => {
+    settledForm.value = { ...f, excluded: [...f.excluded] };
+  }, 400);
+}, { deep: true, immediate: true });
+onBeforeUnmount(() => clearTimeout(settleTimer));
 const range = computed(() => {
-  if (!sim.value.evictions.length) {
+  if (!settledForm.value || !runSimulation(settledForm.value).evictions.length) {
     return null;
   }
-  const i = simInput(form.value);
+  const i = simInput(settledForm.value);
 
   return simulateRange(props.nodes, props.pods, i.thresholds, i.options);
 });
@@ -177,69 +186,44 @@ const possible = computed(() => Object.entries(range.value?.possible || {}).map(
   sometimes: names.filter((n) => !range.value?.certain.includes(n))
 })));
 const skippedText = (s) => `${ s.vm }: ${ t(`harvester.descheduler.simulator.why.${ s.why }`) }`;
-// --- verify with the real descheduler (a dry-run Job that the user applies; this page never writes) ---
-const generated = ref(null);
-const generatedForm = ref(null);
-const verifyError = ref('');
-const dryRun = ref(null);
-const checked = ref(false);
-const comparison = ref(null);
-const copied = ref('');
-const runStep = ref(null);
-const sameResult = computed(() => !!comparison.value && !comparison.value.onlySimulated.length && !comparison.value.onlyReal.length);
-const verdictColor = computed(() => (sameResult.value ? 'success' : comparison.value?.allowed ? 'info' : 'warning'));
-const verdictLabel = computed(() => t(`harvester.descheduler.verify.${ sameResult.value ? 'same' : comparison.value?.allowed ? 'allowed' : 'differs' }`, { count: dryRun.value?.evictions.length ?? 0 }));
+// --- dry run: the real descheduler, once, with the values above ---
+const dryRun = useDryRun();
+const dryRunError = ref('');
+const dryRunPredicted = ref(0);
 
-function generate() {
-  verifyError.value = '';
-  dryRun.value = null;
-  checked.value = false;
-  comparison.value = null;
+async function startDryRun() {
+  dryRunError.value = '';
   try {
-    if (!props.policyRaw || !props.image) {
-      throw new Error(t('harvester.descheduler.verify.missing'));
+    if (!props.policyRaw || !props.deployment) {
+      throw new Error(t('harvester.descheduler.dryRun.missing'));
     }
-    const manifest = buildManifest(buildPolicyYaml(props.policyRaw, { ...applyForm.value }), props.image);
-    // The simulation is kept as it was when the Job was generated, so the comparison and the replay use the same values and cluster state.
-    const snapshot = { ...form.value, excluded: [...form.value.excluded] };
+    dryRunPredicted.value = sim.value.evictions.length;
+    await dryRun.start(buildPolicyYaml(props.policyRaw, { ...applyForm.value }), props.deployment);
+  } catch (e) {
+    dryRunError.value = e?.message || String(e);
+  }
+}
+const dryRunResult = computed(() => {
+  const r = dryRun.run.value;
 
-    generated.value = {
-      name:      manifest.name,
-      yaml:      manifest.yaml,
-      commands:  createCommand(manifest.yaml),
-      simulated: sim.value.evictions,
-      replay:    (order) => runSimulation(snapshot, order).evictions
+  if (!r) {
+    return null;
+  }
+  if (r.error) {
+    return { color: 'error', label: r.error === 'timeout' ? t('harvester.descheduler.dryRun.timeout') : t('harvester.descheduler.dryRun.error', { message: r.error }) };
+  }
+  if (r.failure) {
+    return { color: 'error', label: t('harvester.descheduler.dryRun.failed', { message: r.failure }) };
+  }
+  if (r.evictions) {
+    return {
+      color: r.evictions.length ? 'warning' : 'success',
+      label: t('harvester.descheduler.dryRun.result', { count: r.evictions.length, predicted: dryRunPredicted.value })
     };
-    generatedForm.value = { ...form.value };
-    // The result appears below the button, often off screen: bring it into view.
-    nextTick(() => runStep.value?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' }));
-  } catch (e) {
-    verifyError.value = e?.message || String(e);
   }
-}
 
-async function copy(text, what) {
-  try {
-    await navigator.clipboard.writeText(text);
-    copied.value = what;
-  } catch (e) {
-    copied.value = '';
-  }
-}
-
-async function check() {
-  verifyError.value = '';
-  try {
-    dryRun.value = await loadDryRun(clusterRequest(store), generated.value?.name);
-    checked.value = true;
-    comparison.value = dryRun.value?.ranCycle ? compare(generated.value?.simulated ?? sim.value.evictions, dryRun.value.evictions) : null;
-    if (comparison.value && generated.value && (comparison.value.onlyReal.length || comparison.value.onlySimulated.length)) {
-      comparison.value.allowed = isAllowedChoice(generated.value.replay(dryRun.value?.evictions.map((e) => e.pod) || []), dryRun.value?.evictions || []);
-    }
-  } catch (e) {
-    verifyError.value = t('harvester.descheduler.error', { what: 'dry run', message: e?.message || e?._statusText || String(e) });
-  }
-}
+  return { color: 'info', label: t('harvester.descheduler.dryRun.running', { name: r.name, phase: dryRun.phase.value }) };
+});
 </script>
 
 <template>
@@ -424,158 +408,62 @@ async function check() {
     </section>
 
     <section
-      class="step verify"
+      class="step"
       aria-labelledby="sim-step3"
     >
       <StepHeader
         id="sim-step3"
         :step="3"
-        :title="t('harvester.descheduler.verify.title')"
-        :info="t('harvester.descheduler.verify.note')"
+        :title="t('harvester.descheduler.dryRun.title')"
+        :info="t('harvester.descheduler.dryRun.note')"
       />
-
-      <ol class="substeps">
-        <li>
-          <h3 class="sub-title">
-            {{ t('harvester.descheduler.verify.step.generate') }}
-          </h3>
-          <button
-            class="btn role-primary"
-            :disabled="sim.reason === 'invalidThresholds'"
-            @click="generate"
-          >
-            {{ t('harvester.descheduler.verify.generate') }}
-          </button>
-          <p
-            v-if="generated && !verifyError"
-            class="text-muted generated-note"
-            role="status"
-          >
-            {{ t('harvester.descheduler.verify.generated', { name: generated.name }) }}
-          </p>
-          <Banner
-            v-if="verifyError"
-            color="error"
-            :label="verifyError"
-          />
-        </li>
-
-        <li
-          ref="runStep"
-          :class="{ pending: !generated }"
-        >
-          <h3 class="sub-title">
-            {{ t('harvester.descheduler.verify.step.run') }}
-          </h3>
-          <template v-if="generated">
-            <details
-              class="manual"
-              open
-            >
-              <summary>{{ t('harvester.descheduler.verify.manual') }}</summary>
-              <p class="text-muted">
-                {{ t('harvester.descheduler.verify.run', { name: generated.name }) }}
-              </p>
-              <pre tabindex="0">{{ generated.commands }}</pre>
-              <button
-                class="btn role-secondary"
-                @click="copy(generated.commands, 'create')"
-              >
-                {{ t('harvester.descheduler.verify.copy') }}
-              </button>
-              <span
-                v-if="copied"
-                class="text-muted ml-10"
-                role="status"
-              >{{ t('harvester.descheduler.verify.copied') }}</span>
-            </details>
-          </template>
-          <p
-            v-else
-            class="text-muted"
-          >
-            {{ t('harvester.descheduler.verify.runFirst') }}
-          </p>
-        </li>
-
-        <li>
-          <h3 class="sub-title">
-            {{ t('harvester.descheduler.verify.step.check') }}
-          </h3>
-          <div class="check">
-            <button
-              class="btn role-secondary"
-              @click="check"
-            >
-              {{ t('harvester.descheduler.verify.check') }}
-            </button>
-            <span
-              v-if="!generated"
-              class="text-muted ml-10"
-            >{{ t('harvester.descheduler.verify.checkLatest') }}</span>
-          </div>
-
-          <div aria-live="polite">
-            <template v-if="checked || dryRun">
-              <Banner
-                v-if="checked && !dryRun"
-                color="info"
-                :label="t('harvester.descheduler.verify.notFound')"
-              />
-              <template v-if="dryRun">
-                <p class="text-muted">
-                  {{ t('harvester.descheduler.verify.status', { pod: dryRun.pod, phase: dryRun.phase }) }}
-                </p>
-                <Banner
-                  v-if="dryRun.failure"
-                  color="error"
-                  :label="t('harvester.descheduler.verify.failed', { message: dryRun.failure })"
-                />
-                <Banner
-                  v-else-if="!dryRun.ranCycle"
-                  color="info"
-                  :label="t('harvester.descheduler.verify.notDone')"
-                />
-                <template v-if="dryRun.ranCycle">
-                  <Banner
-                    :color="verdictColor"
-                    :label="verdictLabel"
-                  />
-                  <ul
-                    v-if="comparison"
-                    class="compare"
-                  >
-                    <li
-                      v-for="p in comparison.agree"
-                      :key="'a' + p"
-                    >
-                      {{ p }}: {{ t('harvester.descheduler.verify.both') }}
-                    </li>
-                    <li
-                      v-for="p in comparison.onlyReal"
-                      :key="'r' + p"
-                    >
-                      {{ p }}: {{ t('harvester.descheduler.verify.onlyReal') }}
-                    </li>
-                    <li
-                      v-for="p in comparison.onlySimulated"
-                      :key="'s' + p"
-                    >
-                      {{ p }}: {{ t('harvester.descheduler.verify.onlySim') }}
-                    </li>
-                  </ul>
-                </template>
-              </template>
-            </template>
-          </div>
-        </li>
-      </ol>
-      <p
-        v-if="generated || dryRun"
-        class="text-muted"
-      >
-        {{ t('harvester.descheduler.verify.cleanup') }} <code>{{ cleanupCommand() }}</code>
+      <p class="text-muted">
+        {{ t('harvester.descheduler.dryRun.description') }}
       </p>
+      <div class="dry-run-actions">
+        <button
+          class="btn"
+          :class="dryRun.hasPod.value ? 'role-secondary' : 'role-primary'"
+          :disabled="!dryRun.allowed.value || dryRun.busy.value || sim.reason === 'invalidThresholds'"
+          @click="startDryRun"
+        >
+          {{ t('harvester.descheduler.dryRun.start') }}
+        </button>
+        <button
+          v-if="dryRun.hasPod.value"
+          class="btn role-primary"
+          @click="dryRun.openLog"
+        >
+          {{ t('harvester.descheduler.dryRun.viewLog') }}
+        </button>
+        <span
+          v-if="!dryRun.allowed.value"
+          class="text-muted"
+        >{{ t('harvester.descheduler.dryRun.noPermission') }}</span>
+      </div>
+      <div aria-live="polite">
+        <Banner
+          v-if="dryRunError"
+          color="error"
+          :label="dryRunError"
+        />
+        <Banner
+          v-if="dryRunResult"
+          :color="dryRunResult.color"
+          :label="dryRunResult.label"
+        />
+        <ul
+          v-if="dryRun.run.value?.evictions?.length"
+          class="dry-run-evictions"
+        >
+          <li
+            v-for="e in dryRun.run.value.evictions"
+            :key="e.pod"
+          >
+            {{ t('harvester.descheduler.dryRun.eviction', { pod: e.pod, node: e.node }) }}
+          </li>
+        </ul>
+      </div>
     </section>
 
     <p class="text-muted caveat">
@@ -604,19 +492,10 @@ async function check() {
 .node-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; margin: 8px 0 16px; }
 .evictions { margin-top: 8px; }
 .fold { margin-top: 12px; }
-.fold summary, .manual summary { cursor: pointer; }
-.manual { margin-top: 12px; }
-.generated-note { margin: 8px 0 0; }
 .fold p, .fold ul { margin: 8px 0 0; }
 
-.substeps { list-style: none; padding: 0; margin: 0; counter-reset: sub; }
-.substeps > li { position: relative; padding: 0 0 8px 44px; counter-increment: sub; }
-.substeps > li::before {
-  content: counter(sub, lower-alpha); position: absolute; left: 0; top: 14px; width: 28px; height: 28px; box-sizing: border-box;
-  display: flex; align-items: center; justify-content: center; border: 2px solid var(--primary); border-radius: 50%; font-weight: bold;
-}
-.substeps > li.pending > .sub-title { color: var(--muted); }
-.verify pre { max-height: 260px; overflow: auto; padding: 12px; background: var(--body-bg); border: var(--border-width) solid var(--border); }
-.compare { margin: 8px 0 0; }
+.fold summary { cursor: pointer; }
+.dry-run-actions { display: flex; align-items: center; gap: 12px; margin: 8px 0 12px; }
+.dry-run-evictions { margin: 8px 0 0; }
 .caveat { font-size: 14px; }
 </style>

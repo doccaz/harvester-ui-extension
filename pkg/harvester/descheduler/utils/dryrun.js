@@ -2,12 +2,12 @@ import yaml from './yamllib';
 import { parseYaml } from './policy';
 import { thresholdsValid } from './simulate';
 /**
- * "Verify with the real descheduler": instead of guessing, run the actual descheduler binary once with `--dry-run` against
- * the hypothetical policy and compare. This file only GENERATES the manifest and READS the finished Job's log: the user applies
- * it with kubectl.
+ * Dry run: the actual descheduler binary, run once with `--dry-run` against the policy from the Simulator. In dry-run mode the
+ * descheduler simulates evictions in memory and evicts nothing. Without --descheduling-interval it runs one cycle and exits.
  *
- * --dry-run in descheduler 0.33 swaps in a fake client, so evictions are simulated in memory and nothing real is evicted.
- * Without --descheduling-interval the binary runs one cycle and exits.
+ * The run is a Job (plus a ConfigMap with the policy, owned by the Job) in kube-system, using the add-on's own image, command,
+ * ServiceAccount and security context, so it behaves like the running descheduler. Kubernetes deletes both one hour after the
+ * Job finishes.
  */
 export const DRYRUN_LABEL = 'descheduler-dry-run';
 /** The live policy with only the simulator values changed (everything else, e.g. excluded namespaces, stays as is). */
@@ -63,67 +63,71 @@ export function buildPolicyYaml(policyRaw, f, lib = yaml) {
 
   return lib.dump(policy);
 }
-const indent = (text, n) => text.replace(/\n$/, '').split('\n').map((l) => `${ ' '.repeat(n) }${ l }`).join('\n');
 const stamp = (d) => d.toISOString().replace(/[-:T]/g, '').slice(0, 14);
+const TTL_SECONDS = 3600;
+// Flags of the running descheduler that a one-shot dry run must not inherit.
+const DROP_ARGS = /^--(policy-config-file|descheduling-interval|dry-run)(=|$)/;
 
-/** A ConfigMap with the hypothetical policy plus a one-shot Job running the same image/ServiceAccount as the add-on. */
-export function buildManifest(policyYaml, image, now = new Date()) {
+/**
+ * The Job and its ConfigMap. `container` is the add-on Deployment's descheduler container: the dry run reuses its image, command,
+ * flags (feature gates, verbosity) and security context.
+ */
+export function buildDryRun(policyYaml, container, serviceAccountName = 'descheduler', now = new Date()) {
+  if (!container?.image) {
+    throw new Error('The descheduler image could not be read from the add-on Deployment');
+  }
   const name = `descheduler-dry-run-${ stamp(now) }`;
-  const labels = (n) => `labels:\n${ ' '.repeat(n + 2) }app.kubernetes.io/name: ${ DRYRUN_LABEL }`;
-  const text = `apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ${ name }
-  namespace: kube-system
-  ${ labels(2) }
-data:
-  policy.yaml: |
-${ indent(policyYaml, 4) }
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: ${ name }
-  namespace: kube-system
-  ${ labels(2) }
-spec:
-  backoffLimit: 0
-  ttlSecondsAfterFinished: 3600
-  template:
-    metadata:
-      ${ labels(6) }
-    spec:
-      restartPolicy: Never
-      serviceAccountName: descheduler
-      containers:
-        - name: descheduler
-          image: ${ image }
-          command: ["/bin/descheduler"]
-          args:
-            - --policy-config-file=/policy-dir/policy.yaml
-            - --dry-run
-            - --feature-gates=EvictionsInBackground=true
-            - --v=3
-          resources:
-            requests: { cpu: 50m, memory: 128Mi }
-            limits: { cpu: 500m, memory: 256Mi }
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities: { drop: [ALL] }
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 1000
-          volumeMounts:
-            - { name: policy-volume, mountPath: /policy-dir }
-      volumes:
-        - name: policy-volume
-          configMap: { name: ${ name } }
-`;
+  const labels = { 'app.kubernetes.io/name': DRYRUN_LABEL };
+  const args = (container.args || []).filter((a) => !DROP_ARGS.test(a));
+  const job = {
+    apiVersion: 'batch/v1',
+    kind:       'Job',
+    metadata:   {
+      name, namespace: 'kube-system', labels
+    },
+    spec: {
+      backoffLimit:            0,
+      ttlSecondsAfterFinished: TTL_SECONDS,
+      template:                {
+        metadata: { labels },
+        spec:     {
+          restartPolicy:      'Never',
+          serviceAccountName,
+          containers:         [{
+            name:            'descheduler',
+            image:           container.image,
+            command:         container.command || ['/bin/descheduler'],
+            args:            ['--policy-config-file=/policy-dir/policy.yaml', '--dry-run', ...args],
+            resources:       { requests: { cpu: '50m', memory: '128Mi' }, limits: { cpu: '500m', memory: '256Mi' } },
+            securityContext: container.securityContext || {
+              allowPrivilegeEscalation: false, capabilities: { drop: ['ALL'] }, readOnlyRootFilesystem: true, runAsNonRoot: true
+            },
+            volumeMounts: [{ name: 'policy-volume', mountPath: '/policy-dir' }]
+          }],
+          volumes: [{ name: 'policy-volume', configMap: { name } }]
+        }
+      }
+    }
+  };
+  // Owned by the Job so that the TTL controller's deletion of the Job also removes it.
+  const configMap = (jobUid) => ({
+    apiVersion: 'v1',
+    kind:       'ConfigMap',
+    metadata:   {
+      name,
+      namespace:       'kube-system',
+      labels,
+      ownerReferences: [{
+        apiVersion: 'batch/v1', kind: 'Job', name, uid: jobUid
+      }]
+    },
+    data: { 'policy.yaml': policyYaml }
+  });
 
-  return { name, yaml: text };
+  return {
+    name, job, configMap
+  };
 }
-export const createCommand = (manifest) => `kubectl --insecure-skip-tls-verify create -f - <<'EOF'\n${ manifest }EOF`;
-export const cleanupCommand = () => `kubectl -n kube-system delete job,configmap -l app.kubernetes.io/name=${ DRYRUN_LABEL }`;
 const EVICTED = /"Evicted pod in dry run mode" pod="([^"]+)"(?:.*?strategy="([^"]*)")?.*?node="([^"]*)"/;
 
 export function parseDryRunLog(log) {
@@ -140,29 +144,6 @@ export function parseDryRunLog(log) {
   }
 
   return out;
-}
-/** Compares by pod (namespace/name): the simulator's guess versus what the real binary decided. */
-export function compare(sim, real) {
-  const s = new Set(sim.map((e) => `${ e.namespace }/${ e.pod }`));
-  const r = new Set(real.map((e) => e.pod));
-
-  return {
-    agree:         [...s].filter((p) => r.has(p)),
-    onlySimulated: [...s].filter((p) => !r.has(p)),
-    onlyReal:      [...r].filter((p) => !s.has(p))
-  };
-}
-/**
- * A difference is not necessarily a disagreement: VMs of equal priority and QoS are tried in no particular order, and the loop only
- * stops when no room is left, so different orders give different (but equally valid) results. `replay` is the simulation run with
- * the real descheduler's picks forced to the front of the order; if that yields exactly the VMs the real run evicted, the real
- * choice is one the rules allow. If not, the simulation cannot explain it.
- */
-export function isAllowedChoice(replay, real) {
-  const a = new Set(replay.map((e) => `${ e.namespace }/${ e.pod }`));
-  const b = new Set(real.map((e) => e.pod));
-
-  return a.size === b.size && [...a].every((p) => b.has(p));
 }
 /** Why a finished dry run produced no result: the descheduler's own error, e.g. a rejected policy. */
 export function parseDryRunFailure(log) {

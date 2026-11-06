@@ -5,7 +5,7 @@ import { useTranslation } from '../utils/i18n';
 import { useData } from '../utils/useData';
 const t = useTranslation();
 // Pods are only needed to find the descheduler pod whose log attributes the migrations.
-const { rawPods, errors, loading } = useData(0);
+const { rawPods, errors, loading } = useData();
 </script>
 
 <template>

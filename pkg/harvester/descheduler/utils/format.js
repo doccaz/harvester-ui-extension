@@ -8,3 +8,8 @@ export function formatBytes(bytes) {
 export function formatCores(millis) {
   return `${ (millis / 1000).toFixed(1) } cores`;
 }
+
+/** "47.3%", "30%". One decimal, so a node at 29.6% is not shown as sitting on a 30% threshold. */
+export function formatPct(v) {
+  return `${ Number(v.toFixed(1)) }%`;
+}

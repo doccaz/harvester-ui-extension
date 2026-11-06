@@ -4,7 +4,6 @@ import { useStore } from 'vuex';
 import { Banner } from '@components/Banner';
 import SortableTable from '@shell/components/SortableTable';
 import { useTranslation } from '../utils/i18n';
-import { clusterRequest } from '../utils/cluster';
 import { loadHistory } from '../utils/api';
 import { countBy } from '../utils/moves';
 const props = defineProps({ pods: { type: Array, required: true } });
@@ -14,15 +13,15 @@ const state = ref(null);
 const error = ref('');
 const when = (ms) => new Date(ms).toLocaleString();
 
-async function load() {
+async function load(force = false) {
   try {
-    state.value = await loadHistory(clusterRequest(store), props.pods);
+    state.value = await loadHistory(store, props.pods, force);
     error.value = '';
   } catch (e) {
     error.value = t('harvester.descheduler.error', { what: 'migrations', message: e?.message || e?._statusText || String(e) });
   }
 }
-onMounted(load);
+onMounted(() => load());
 // KubeVirt keeps every migration record, so the list can be long: a sortable, searchable, paged table, newest first.
 const rows = computed(() => (state.value?.rows || []).map((r) => ({
   ...r,
@@ -60,7 +59,7 @@ const kinds = computed(() => countBy(rows.value, (r) => r.kind));
       </p>
       <button
         class="btn role-secondary"
-        @click="load"
+        @click="load(true)"
       >
         {{ t('harvester.descheduler.refresh') }}
       </button>

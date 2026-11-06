@@ -2532,172 +2532,150 @@ harvester:
       simulator: Simulator
       history: History
     title: Descheduler
-    subtitle: What the descheduler sees, and whether it will move anything. Read-only.
+    subtitle: Shows how the descheduler classifies each host and whether it will live migrate virtual machines in its next cycle.
     refresh: Refresh
-    updated: "Updated {time}"
+    updated: "Last updated: {time}"
     loading: Loading...
-    error: "Could not load {what}: {message}"
+    error: "Unable to load {what}: {message}"
     steps:
-      settings: Try settings
-      move: See what would move
-      moveHint: "What one run of the descheduler would do with these settings. It is a simulation in your browser, so it can differ slightly from the real thing (step 3 checks that)."
+      settings: Thresholds
+      move: Predicted migrations
+      moveHint: "The result of one descheduler cycle with these thresholds, calculated in the browser. It can differ from the actual descheduler; use Dry Run to confirm."
     verdict:
-      noPolicy:
-        title: The descheduler policy could not be read
-        body: The ConfigMap kube-system/descheduler was not found, so no prediction is possible. Is the add-on enabled?
-      badPolicy:
-        title: The descheduler policy could not be understood
-        body: The ConfigMap kube-system/descheduler exists but could not be parsed (details under Active policy), so no prediction is possible.
-      noUnder:
-        title: Nothing will move
-        body: "No node is underutilized (a node must be below the low thresholds on every resource), so there is nowhere to move VMs to. Over target: {over}."
-      noOver:
-        title: Nothing to move
-        body: "No node is above the target thresholds, so the descheduler has no reason to evict anything. Under: {under}."
-      tooFewUnder:
-        title: Nothing will move yet
-        body: "Only {count} underutilized node(s); the policy needs more than numberOfNodes. Under: {under}."
-      wouldAct:
-        title: The descheduler would evict VMs
-        body: "From {over} towards {under}. Limits apply: nodeFit, at most {max} evictions per node per cycle, and the excluded namespaces."
+      noPolicy: The descheduler policy (ConfigMap kube-system/descheduler) was not found. Verify that the descheduler add-on is enabled.
+      badPolicy: The descheduler policy cannot be parsed. See Active Policy for details.
+      deviation: No prediction is available. The policy uses deviation thresholds, which this page does not support.
+      noUnder: No virtual machines will be moved in the next cycle because no host is underutilized.
+      noOver: No virtual machines will be moved in the next cycle because no host is overutilized.
+      tooFewUnder: "No virtual machines will be moved in the next cycle because only {under} host(s) are underutilized and the policy requires more (numberOfNodes)."
+      wouldAct: "In the next cycle, the descheduler will move virtual machines from {over} overutilized host(s) to {under} underutilized host(s), up to {max} per host."
     run:
-      notInstalled: The descheduler add-on is not installed, so nothing will be moved no matter what the policy says.
-      disabled: The descheduler add-on is disabled, so nothing will be moved no matter what the policy says.
-      notReady: The descheduler pod is not ready, so nothing is being moved right now. The prediction below is what it would do once it runs.
+      notInstalled: The descheduler add-on is not installed. No virtual machines will be moved.
+      disabled: The descheduler add-on is disabled. No virtual machines will be moved.
+      notReady: The descheduler pod is not ready. No virtual machines are being moved until it is running.
     status:
       title: Add-on
       enabled: Enabled
       disabled: Disabled
       version: Version
       state: State
-      replicas: Replicas ready
+      replicas: Ready replicas
       notInstalled: The descheduler add-on is not installed.
-      unavailable: Could not be loaded, see the error above.
+      unavailable: Unable to load. See the error above.
     policy:
-      title: Active policy
-      note: Read from the ConfigMap the descheduler is actually running.
+      title: Active Policy
+      note: Read from the ConfigMap kube-system/descheduler, which the running descheduler uses.
       low: Underutilized below
       target: Overutilized above
-      maxEvict: Max evictions per node
-      nodeFit: Only evict if another node fits
+      maxEvict: Maximum evictions per host
+      nodeFit: Evict only if another host has capacity
       excluded: Excluded namespaces
       excludedCount: "{count} namespaces"
       plugin: LowNodeUtilization
-      parseError: "The policy ConfigMap could not be parsed: {message}"
-      pluginOff: LowNodeUtilization is configured but not enabled in any profile.
-      none: none
-      yes: yes
-      no: no
+      parseError: "Unable to parse the policy ConfigMap: {message}"
+      pluginOff: LowNodeUtilization is configured but is not enabled in any profile.
+      none: None
+      yes: "Yes"
+      no: "No"
     nodes:
-      title: Node utilization
-      note: The descheduler measures the REQUESTS of the pods on a node, not their live usage.
+      title: Host Utilization
+      note: The descheduler measures the resources requested by the pods on each host, not the resources they actually use.
+      legend: "A host is Underutilized when both CPU and memory are below the Underutilized threshold, and Overutilized when CPU or memory is above the Overutilized threshold. The descheduler moves virtual machines from overutilized hosts to underutilized hosts."
       cpu: CPU
       memory: Memory
       pods: Pods
       band:
         under: Underutilized
-        appropriate: Appropriate
+        appropriate: Balanced
         over: Overutilized
-      detail: "{used} of {total}"
+      detail: "{used} of {total} requested"
       podsCount: "{count} active pods"
       markLow: "Underutilized below {value}%"
       markTarget: "Overutilized above {value}%"
+      markLowShort: "Under {value}%"
+      markTargetShort: "Over {value}%"
     simulator:
       title: Simulator
-      subtitle: Try other settings against the live cluster, check them with a real dry run, and see what would move.
-      note: "Try other thresholds against the live cluster. The simulation runs in your browser and changes nothing."
-      reset: Reset to active policy
-      excluded: Excluded namespaces (their VMs are never evicted)
-      badNamespaces: "Not valid namespace names: {list}. Use lowercase letters, digits and '-'."
-      podsWas: "was {count}"
-      barChange: "{label} {before}% to {after}%"
+      subtitle: Test other thresholds against the current cluster state and preview which virtual machines would be live migrated.
+      note: "The simulation runs in the browser and does not change the cluster or the active policy."
+      reset: Reset to Active Policy
+      excluded: Excluded namespaces (virtual machines in these namespaces are never evicted)
+      badNamespaces: "Invalid namespace names: {list}. Names can contain only lowercase letters, digits, and hyphens."
+      podsWas: "previously {count}"
+      barChange: "{label} from {before} to {after}"
       more: "and {count} more (see the table below)"
-      routesLabel: VMs per route
-      route: "{from} to {to}: {count} VM(s)"
-      movesTitle: "VMs that would move ({count})"
-      exampleTitle: "One possible outcome ({count} VMs)"
-      possibleSummary: "VMs that could be picked from {node} ({count})"
-      always: "Evicted in every case: {list}."
-      sometimes: "Evicted only in some orders: {list}."
-      skippedSummary: "Skipped VMs ({count})"
-      noChange: Nothing moves from or to this node with these settings.
+      routesLabel: Virtual machines per route
+      route: "{from} to {to}: {count} virtual machine(s)"
+      movesTitle: "Virtual machines to be migrated ({count})"
+      exampleTitle: "Example result ({count} virtual machines)"
+      possibleSummary: "Virtual machines that can be evicted from {node} ({count})"
+      always: "Evicted in every result: {list}."
+      sometimes: "Evicted in some results only: {list}."
+      skippedSummary: "Skipped virtual machines ({count})"
+      noChange: No virtual machines move to or from this host.
       nodes:
-        title: Node utilization, now and after
-        note: "One bar per resource: the solid part is the level after the moves; hatched grey is load that leaves the node, hatched blue is load that arrives. The vertical marks are the low and target thresholds you entered above."
-      changed: These values differ from the active policy, so this is a hypothetical.
-      vm: VM
-      from: From
-      to: Likely to
+        title: Host Utilization Before and After
+        note: "The solid part of each bar is the utilization after the migrations. Grey hatching is load that leaves the host; blue hatching is load that arrives. The shaded ends of the bar are the Underutilized and Overutilized zones."
+      changed: These values differ from the active policy.
+      vm: Virtual Machine
+      from: Source Host
+      to: Likely Target Host
       size: Requests
       why:
-        doesNotFit: no underutilized node has room
+        doesNotFit: no underutilized host has enough capacity
       result:
-        moves: "{count} VM(s) would be evicted in one cycle."
-        range: "Between {min} and {max} VMs would be evicted in one cycle. Which ones depends on the order in which the descheduler happens to try equal VMs; one possible outcome is shown below."
-        rangeApprox: "About {min} to {max} VMs would be evicted in one cycle (there are too many orders to check them all, so the bounds are approximate). Which ones depends on the order in which the descheduler happens to try equal VMs; one possible outcome is shown below."
-        noUnder: No node is underutilized with these thresholds, so nothing moves.
-        noOver: No node is above the target thresholds, so nothing moves.
-        tooFewUnder: Too few underutilized nodes (numberOfNodes), so nothing moves.
-        noThresholds: No thresholds set.
-        invalidThresholds: A low threshold is above its target threshold. The real descheduler refuses to start with that, so nothing can be simulated.
-        ran: Nothing would be evicted.
-      tieNote: "Among VMs with the same priority and QoS the real descheduler picks in no particular order, so it may choose different ones than shown here, and sometimes a different number of them. Step 3 checks whether its choice still follows the same rules."
-      caveatShort: An approximation of descheduler 0.33, for one cycle.
-      caveat: "The destination is a guess (the Kubernetes scheduler decides). nodeFit checks node selectors, node affinity, taints, cordon and free capacity, but not pod affinity or topology spread."
+        moves: "{count} virtual machine(s) would be evicted in one cycle."
+        range: "Between {min} and {max} virtual machines would be evicted in one cycle. The descheduler evicts virtual machines of equal priority in no fixed order, so the exact set varies. One possible result is shown below."
+        rangeApprox: "Approximately {min} to {max} virtual machines would be evicted in one cycle. The bounds are estimated because there are too many possible orders to evaluate. One possible result is shown below."
+        noUnder: No host is underutilized with these thresholds. No virtual machines would be migrated.
+        noOver: No host is overutilized with these thresholds. No virtual machines would be migrated.
+        tooFewUnder: Too few hosts are underutilized (numberOfNodes). No virtual machines would be migrated.
+        noThresholds: No thresholds are set.
+        invalidThresholds: An Underutilized threshold is higher than the matching Overutilized threshold. The descheduler does not start with this configuration.
+        ran: No virtual machines would be evicted.
+      tieNote: "The descheduler evicts virtual machines of equal priority and QoS class in no fixed order, so the actual set can differ from this example."
+      caveatShort: Approximates one cycle of descheduler 0.33.
+      caveat: "The target host is an estimate; the Kubernetes scheduler makes the final placement. The capacity check includes node selectors, node affinity, taints, cordoned hosts, and free resources, but not pod affinity or topology spread constraints."
+    dryRun:
+      title: Dry Run
+      note: "Dry-run mode evaluates evictions in memory. No virtual machines are evicted or migrated."
+      description: "Runs the descheduler once with the thresholds above in dry-run mode. Select View Log to see its output. The run creates a Job and a ConfigMap in the kube-system namespace; both are deleted automatically one hour after the run completes."
+      start: Dry Run
+      viewLog: View Log
+      noPermission: You do not have permission to create Jobs and ConfigMaps in kube-system.
+      missing: Unable to read the active policy or the descheduler Deployment.
+      running: "Dry run {name}: {phase}"
+      result: "The descheduler would evict {count} virtual machine(s). The simulation predicted {predicted}."
+      eviction: "{pod} (from {node})"
+      failed: "The descheduler did not start: {message}"
+      error: "Unable to start the dry run: {message}"
+      timeout: The dry-run pod did not start within 60 seconds. Check the Job in the kube-system namespace.
     history:
-      title: Migration history
-      kindsLabel: Migrations per cause
-      subtitle: Who asked for each live migration, and why.
-      note: Only the migrations KubeVirt still keeps are listed.
-      empty: No migrations are recorded right now.
-      activity: "Descheduler activity in the log ({cycles} cycles, {from} to {to}): {requests} eviction request(s), {evicted} pod(s) evicted."
-      noLog: "The descheduler log could not be read ({message}), so evacuations cannot be attributed with certainty."
+      title: Migration History
+      kindsLabel: Migrations by cause
+      subtitle: Live migrations retained by KubeVirt, with the cause of each one.
+      note: KubeVirt deletes older migration records, so only retained migrations are listed.
+      empty: No migrations are recorded.
+      activity: "Descheduler log, {from} to {to}: {cycles} cycles, {requests} eviction request(s), {evicted} pod(s) evicted."
+      noLog: "Unable to read the descheduler log ({message}). Node evacuations cannot be attributed with certainty."
       col:
-        when: When
-        vm: VM
+        when: Started
+        vm: Virtual Machine
         route: Route
         cause: Cause
         result: Result
       kind:
         descheduler: Descheduler
-        evacuation: Node evacuation
-        evacuationUnverified: Node evacuation (unverified)
+        evacuation: Host evacuation
+        evacuationUnverified: Host evacuation (unverified)
         manual: Manual
       why:
-        descheduler: "The descheduler requested evictions in a cycle right next to this migration."
-        evacuation: "Evacuation of {node} (drain or maintenance mode). The descheduler requested no evictions around that time."
-        evacuationUnverified: "Evacuation of {node}. The descheduler log does not cover this time, so the descheduler cannot be ruled out."
-        manual: "No evacuation marker: started by a person or a script (for example Migrate in the UI)."
-      took: "{seconds}s"
+        descheduler: "The descheduler requested evictions in the cycle closest to this migration."
+        evacuation: "Evacuation of {node} (drain or maintenance mode). The descheduler requested no evictions at that time."
+        evacuationUnverified: "Evacuation of {node}. The descheduler log does not cover this period, so the descheduler cannot be ruled out."
+        manual: "Started by a user or an automation tool, for example the Migrate action."
+      took: "{seconds} s"
       failed: "Failed: {reason}"
-    verify:
-      title: Verify with the real descheduler
-      note: "Runs the actual descheduler once with --dry-run (it simulates evictions in memory and evicts nothing) on the values above, and compares. The verification itself never writes to the cluster: it generates the manifest, you apply it with kubectl, then it reads the result."
-      generate: Generate dry-run Job
-      generated: "Generated {name}. The commands are in step b below."
-      missing: The active policy or the descheduler image could not be read.
-      run: "Run this once (names are unique: {name}):"
-      copy: Copy command
-      copied: Copied
-      check: Check result
-      checkLatest: Reads the latest dry-run pod and compares it with the values above.
-      runFirst: Generate the Job first (step a).
-      step:
-        generate: Generate the dry-run Job
-        run: Run it once
-        check: Check the result
-      notFound: No dry-run pod found yet. Run the command first.
-      status: "Pod {pod}: {phase}."
-      notDone: The dry run has not finished a cycle yet. Check again in a few seconds.
-      same: "The real descheduler agrees with the simulation ({count} eviction(s))."
-      differs: "The real descheduler decided differently from the simulation ({count} eviction(s) in dry run), and the order of equal VMs does not explain it. Treat the simulation as an approximation here."
-      allowed: "The real descheduler picked different VMs from the simulation, but its choice follows the same rules ({count} eviction(s) in dry run). Among VMs with the same priority and QoS it picks in no particular order, so this is expected and can change from run to run."
-      both: both agree
-      onlyReal: only the real descheduler would evict it
-      onlySim: only the simulation would evict it
-      failed: "The descheduler refused to run: {message}"
-      manual: "Run it with kubectl instead"
-      cleanup: "Clean up when done (the Job also expires after an hour):"
 typeDescription:
   # Map of
   # type: Description to be shown on the top of list view describing the type.

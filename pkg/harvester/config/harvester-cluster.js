@@ -739,7 +739,7 @@ export function init($plugin, store) {
   );
 
   registerDescheduler({
-    virtualType, basicType, labelGroup, setGroupDefaultType
+    virtualType, basicType, labelGroup, setGroupDefaultType, weightGroup
   });
 
   configureType(HCI.CLUSTER_NETWORK, {

@@ -7,10 +7,10 @@ import { useTranslation } from '../utils/i18n';
 import { useData } from '../utils/useData';
 import { runState } from '../utils/status';
 const t = useTranslation();
-// No auto-refresh: the numbers must not move while you are editing values.
+// Frozen at load time: the numbers must not move while you are editing values. Refresh reloads them.
 const {
   state, rawNodes, rawPods, errors, loading, updated, refresh, dataOk, descheduler
-} = useData(0);
+} = useData({ live: false });
 const run = computed(() => runState(state.value?.addon || null, state.value?.deployment || null));
 </script>
 
@@ -41,7 +41,7 @@ const run = computed(() => runState(state.value?.addon || null, state.value?.dep
         :pods="rawPods"
         :policy="state?.policy || null"
         :policy-raw="state?.policyRaw || null"
-        :image="state?.deployment?.spec?.template?.spec?.containers?.[0]?.image || null"
+        :deployment="state?.deployment || null"
       />
     </template>
   </div>

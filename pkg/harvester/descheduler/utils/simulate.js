@@ -1,5 +1,7 @@
 import { podFitsNode } from './fit';
-import { classify, isActivePod, nodeUsage, podRequests } from './utilization';
+import {
+  classify, isActivePod, nodeUsage, percent, podRequests
+} from './utilization';
 const QOS_RANK = {
   BestEffort: 0, Burstable: 1, Guaranteed: 2
 };
@@ -8,10 +10,8 @@ export const isLauncher = (p) => p?.metadata?.labels?.['kubevirt.io'] === 'virt-
 export const vmName = (p) => p?.metadata?.labels?.['vm.kubevirt.io/name'] || p?.metadata?.name;
 export const sortKey = (p) => [p?.spec?.priority ?? 0, QOS_RANK[p?.status?.qosClass] ?? 1];
 function recompute(u) {
-  const pct = (a, b) => (b > 0 ? Math.round((a / b) * 100) : 0);
-
   return {
-    ...u, cpuPct: pct(u.requests.cpu, u.allocatable.cpu), memoryPct: pct(u.requests.memory, u.allocatable.memory)
+    ...u, cpuPct: percent(u.requests.cpu, u.allocatable.cpu), memoryPct: percent(u.requests.memory, u.allocatable.memory)
   };
 }
 /** The descheduler refuses to start when a low threshold is above its target ("thresholds' cpu percentage is greater than targetThresholds'"). */

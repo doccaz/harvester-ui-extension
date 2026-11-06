@@ -4,7 +4,6 @@ import YAML from 'yaml';
  * library in tests. Parsing uses the YAML 1.2 core schema (plain maps, lists and scalars).
  */
 export default {
-  JSON_SCHEMA: undefined,
-  load:        (text) => YAML.parse(text, { logLevel: 'error' }),
-  dump:        (value) => YAML.stringify(value, { lineWidth: 0 })
+  load: (text) => YAML.parse(text, { logLevel: 'error' }),
+  dump: (value) => YAML.stringify(value, { lineWidth: 0 })
 };

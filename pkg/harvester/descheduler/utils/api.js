@@ -1,33 +1,62 @@
-import { DRYRUN_LABEL, parseDryRunFailure, parseDryRunLog } from './dryrun';
+import {
+  CONFIG_MAP, NAMESPACE, NODE, POD, WORKLOAD_TYPES
+} from '@shell/config/types';
+import { HCI } from '../../types';
+import { clusterRequest } from './cluster';
 import { activity, historyRows, parseCycles } from './history';
 import { parseYaml, summarisePolicy } from './policy';
-async function maybe(request, url) {
+import { isActivePod } from './utilization';
+
+/**
+ * Data access. Nodes, pods, namespaces and migrations come from the dashboard store: the Harvester dashboard, host and VM lists
+ * already load them, the store keeps them current over the websocket, and so opening a page costs nothing after the first visit.
+ * Only pod logs and the dry-run Job go to the API directly.
+ */
+const NS = 'kube-system';
+const NAME = 'descheduler';
+const NAME_LABEL = 'app.kubernetes.io/name';
+
+export const DESCHEDULER_ID = `${ NS }/${ NAME }`;
+
+/** The store holding the current Harvester cluster: `harvester` standalone, the product's own store inside Rancher. */
+export function storeName(store) {
+  return store.getters['currentProduct']?.inStore || 'harvester';
+}
+
+export function findAll(store, type, force = false) {
+  return store.dispatch(`${ storeName(store) }/findAll`, { type, opt: { force } });
+}
+
+async function findOrNull(store, type, id, force) {
   try {
-    return await request({ url });
+    return await store.dispatch(`${ storeName(store) }/find`, {
+      type, id, opt: { force }
+    });
   } catch (e) {
-    if (e?._status === 404 || e?.status === 404) {
+    if (e?._status === 404 || e?.status === 404 || e?.code === 'NotFound') {
       return null;
     }
     throw e;
   }
 }
-export async function loadNodes(request) {
-  return (await request({ url: '/v1/nodes' }))?.data || [];
-}
-export async function loadNamespaces(request) {
-  const items = (await request({ url: '/k8s/clusters/local/api/v1/namespaces' }))?.items || [];
 
-  return items.map((n) => n?.metadata?.name).filter(Boolean);
+export function loadNodes(store, force) {
+  return findAll(store, NODE, force);
 }
-export async function loadPods(request) {
-  // managedFields is large and unused
-  return (await request({ url: '/v1/pods?exclude=metadata.managedFields' }))?.data || [];
+
+export function loadPods(store, force) {
+  return findAll(store, POD, force);
 }
-export async function loadDescheduler(request) {
+
+export async function loadNamespaces(store) {
+  return (await findAll(store, NAMESPACE)).map((n) => n?.metadata?.name).filter(Boolean);
+}
+
+export async function loadDescheduler(store, force) {
   const [addon, deployment, cm] = await Promise.all([
-    maybe(request, '/v1/harvesterhci.io.addons/kube-system/descheduler'),
-    maybe(request, '/v1/apps.deployments/kube-system/descheduler'),
-    maybe(request, '/v1/configmaps/kube-system/descheduler')
+    findOrNull(store, HCI.ADD_ONS, DESCHEDULER_ID, force),
+    findOrNull(store, WORKLOAD_TYPES.DEPLOYMENT, DESCHEDULER_ID, force),
+    findOrNull(store, CONFIG_MAP, DESCHEDULER_ID, force)
   ]);
   const policyRaw = cm?.data?.['policy.yaml'] || null;
   let policy = null;
@@ -46,6 +75,18 @@ export async function loadDescheduler(request) {
     addon, deployment, policyRaw, policy, policyError
   };
 }
+
+/** The running descheduler pod, matched by label (a name prefix would also match the dry-run pods). */
+export function deschedulerPod(pods) {
+  return pods.find((p) => p?.metadata?.namespace === NS && p?.metadata?.labels?.[NAME_LABEL] === NAME && isActivePod(p));
+}
+
+export async function podLog(store, pod, params = '') {
+  const r = await clusterRequest(store)({ url: `/k8s/clusters/local/api/v1/namespaces/${ pod.metadata.namespace }/pods/${ pod.metadata.name }/log${ params }` });
+
+  return typeof r === 'string' ? r : (r?.data || '');
+}
+
 const HOUR = 3600000;
 
 /**
@@ -53,22 +94,19 @@ const HOUR = 3600000;
  * what lets us say whether a node evacuation was really a drain. The log is fetched from just before the oldest
  * migration (or the last 24 h when there are none), to keep the download small.
  */
-export async function loadHistory(request, pods) {
-  const res = await request({ url: '/v1/kubevirt.io.virtualmachineinstancemigrations' });
-  const vmims = res?.data || [];
+export async function loadHistory(store, pods, force = false) {
+  const vmims = await findAll(store, HCI.VMIM, force);
   const oldest = vmims.reduce((min, m) => Math.min(min, Date.parse(m.metadata?.creationTimestamp)), Date.now());
   const since = new Date(Math.min(oldest - HOUR, Date.now() - 24 * HOUR)).toISOString();
+  const pod = deschedulerPod(pods);
   let cycles = [];
   let logError = null;
-  const pod = pods.find((p) => p?.metadata?.namespace === 'kube-system' && /^descheduler-/.test(p?.metadata?.name || ''));
 
   if (!pod) {
     logError = 'descheduler pod not found';
   } else {
     try {
-      const log = await request({ url: `/k8s/clusters/local/api/v1/namespaces/kube-system/pods/${ pod.metadata.name }/log?sinceTime=${ encodeURIComponent(since) }` });
-
-      cycles = parseCycles(typeof log === 'string' ? log : (log?.data || ''));
+      cycles = parseCycles(await podLog(store, pod, `?sinceTime=${ encodeURIComponent(since) }`));
     } catch (e) {
       logError = e?.message || e?._statusText || String(e);
     }
@@ -78,46 +116,3 @@ export async function loadHistory(request, pods) {
     rows: historyRows(vmims, cycles), activity: activity(cycles), logError
   };
 }
-/** Finds the dry-run pod the user created (the one whose name starts with `prefix`, else the newest) and parses its log. */
-export async function loadDryRun(request, prefix) {
-  const res = await request({ url: '/v1/pods?exclude=metadata.managedFields' });
-  const mine = (res?.data || [])
-    .filter((p) => p?.metadata?.namespace === 'kube-system' && p?.metadata?.labels?.['app.kubernetes.io/name'] === DRYRUN_LABEL)
-    .filter((p) => !prefix || p.metadata.name.startsWith(prefix))
-    .sort((a, b) => Date.parse(b.metadata.creationTimestamp) - Date.parse(a.metadata.creationTimestamp));
-  const pod = mine[0];
-
-  if (!pod) {
-    return null;
-  }
-  let log = '';
-
-  try {
-    const r = await request({ url: `/k8s/clusters/local/api/v1/namespaces/kube-system/pods/${ pod.metadata.name }/log` });
-
-    log = typeof r === 'string' ? r : (r?.data || '');
-  } catch (e) {
-    log = ''; // still pending/creating: report the phase only
-  }
-  const phase = pod.status?.phase || 'Pending';
-
-  return {
-    pod:       pod.metadata.name,
-    phase,
-    finished:  phase === 'Succeeded' || phase === 'Failed',
-    ranCycle:  log.includes('Total number of evictions/requests'),
-    evictions: parseDryRunLog(log),
-    failure:   parseDryRunFailure(log)
-  };
-}
-const ADDON_URL = '/v1/harvesterhci.io.addons/kube-system/descheduler';
-
-/** The live descheduler Addon (null when not installed). Used by the editor, which always works from a fresh copy. */
-export async function loadAddon(request) {
-  return maybe(request, ADDON_URL);
-}
-/**
- * The only write this extension makes to the cluster: replace the descheduler Addon (its valuesContent and our revert
- * annotation). The object comes from `planSave`/`planRevert`, which carry the resourceVersion, so a concurrent change is rejected
- * by the API server instead of overwritten.
- */

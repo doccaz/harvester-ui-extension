@@ -1,28 +1,27 @@
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useStore } from 'vuex';
+import { NODE, POD } from '@shell/config/types';
 import { useTranslation } from './i18n';
-import { clusterRequest } from './cluster';
-import { loadDescheduler, loadNodes, loadPods } from './api';
+import { loadDescheduler, loadNodes, loadPods, storeName } from './api';
 import { nodeUsage } from './utilization';
+
 /**
- * The cluster data every page needs (nodes, pods, the add-on and its policy), loaded through the dashboard session.
- * `autoRefreshMs` > 0 reloads on a timer (the overview); the Simulator page passes 0 so numbers do not move under an edit.
+ * The cluster data every page needs (nodes, pods, the add-on and its policy). Nodes and pods come from the dashboard store,
+ * which the websocket keeps current, so the numbers stay live without polling. `live: false` (the Simulator) freezes them at
+ * load time so they do not move while you edit values; Refresh reloads.
  */
-export function useData(autoRefreshMs = 0) {
+export function useData({ live = true } = {}) {
   const store = useStore();
   const t = useTranslation();
-  const request = clusterRequest(store);
+  const inStore = storeName(store);
   const state = ref(null);
-  const usages = ref([]);
-  const rawNodes = ref([]);
-  const rawPods = ref([]);
+  const snapshot = ref({ nodes: [], pods: [] });
   const errors = ref([]);
   const failed = ref([]); // which sources could not be loaded: nodes, pods, descheduler
   const loading = ref(true);
   const updated = ref('');
-  let timer;
 
-  async function refresh() {
+  async function refresh(force = false) {
     const errs = [];
     const bad = [];
     const guard = async(what, fn, fallback) => {
@@ -36,32 +35,28 @@ export function useData(autoRefreshMs = 0) {
       }
     };
     const [nodes, pods, desched] = await Promise.all([
-      guard('nodes', () => loadNodes(request), []),
-      guard('pods', () => loadPods(request), []),
-      guard('descheduler', () => loadDescheduler(request), null)
+      guard('nodes', () => loadNodes(store, force), []),
+      guard('pods', () => loadPods(store, force), []),
+      guard('descheduler', () => loadDescheduler(store, force), null)
     ]);
 
-    rawNodes.value = nodes;
-    rawPods.value = pods;
-    usages.value = nodes.map((n) => nodeUsage(n, pods)).sort((a, b) => a.name.localeCompare(b.name));
+    snapshot.value = { nodes: [...nodes], pods: [...pods] };
     state.value = desched;
     errors.value = errs;
     failed.value = bad;
     updated.value = new Date().toLocaleTimeString();
     loading.value = false;
   }
-  onMounted(() => {
-    refresh();
-    if (autoRefreshMs > 0) {
-      timer = setInterval(refresh, autoRefreshMs);
-    }
-  });
-  onBeforeUnmount(() => timer && clearInterval(timer));
+  onMounted(() => refresh());
+
+  const rawNodes = computed(() => (live && !loading.value ? store.getters[`${ inStore }/all`](NODE) : snapshot.value.nodes));
+  const rawPods = computed(() => (live && !loading.value ? store.getters[`${ inStore }/all`](POD) : snapshot.value.pods));
+  const usages = computed(() => rawNodes.value.map((n) => nodeUsage(n, rawPods.value)).sort((a, b) => a.name.localeCompare(b.name)));
   // Without nodes and pods there is nothing to measure; showing 0% bars or a verdict would be a lie.
   const dataOk = computed(() => !failed.value.includes('nodes') && !failed.value.includes('pods'));
   const descheduler = computed(() => !failed.value.includes('descheduler'));
 
   return {
-    state, usages, rawNodes, rawPods, errors, failed, loading, updated, refresh, dataOk, descheduler, request
+    state, usages, rawNodes, rawPods, errors, failed, loading, updated, refresh: () => refresh(true), dataOk, descheduler
   };
 }

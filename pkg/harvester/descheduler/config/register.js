@@ -2,8 +2,12 @@ import { GROUP, HARVESTER_PRODUCT, NAV_GROUP, PAGES } from './names';
 /** Adds Advanced > Descheduler (Overview, Simulator, History) to the Harvester side menu. */
 export function registerDescheduler(dsl) {
   const {
-    virtualType, basicType, labelGroup, setGroupDefaultType
+    virtualType, basicType, labelGroup, setGroupDefaultType, weightGroup
   } = dsl;
+
+  // The shell keeps Advanced last with a basic-tree weight of -1, but it creates the parent of a nested group
+  // (`advanced::descheduler`) with the non-basic weight, which defaults to 0 and moves Advanced to the top. Set both.
+  weightGroup(NAV_GROUP, -1, false);
 
   Object.values(PAGES).forEach((p) => virtualType({
     labelKey: p.labelKey,

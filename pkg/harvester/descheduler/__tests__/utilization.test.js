@@ -122,3 +122,18 @@ describe('verdict', () => {
     expect(verdict([mk('a', 1, 1)], null).key).toBe('noPolicy');
   });
 });
+describe('threshold edges', () => {
+  const T = { thresholds: { cpu: 30, memory: 30 }, targetThresholds: { cpu: 50, memory: 50 } };
+  const u = (cpuPct, memoryPct) => ({
+    name: 'n', allocatable: { cpu: 0, memory: 0 }, requests: { cpu: 0, memory: 0 }, pods: 0, cpuPct, memoryPct
+  });
+
+  it('keeps the exact percentage, so 29.6% is underutilized against a 30% threshold', () => {
+    expect(nodeUsage(node('a', '1000', '1000'), [pod('a', '296', '296')]).cpuPct).toBeCloseTo(29.6);
+    expect(classify(u(29.6, 29.6), T)).toBe('under');
+    expect(classify(u(50.4, 10), T)).toBe('over');
+  });
+  it('gives no prediction in deviation mode', () => {
+    expect(verdict([u(10, 10), u(90, 90)], { ...T, useDeviationThresholds: true }).key).toBe('deviation');
+  });
+});

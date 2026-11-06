@@ -1,10 +1,6 @@
-import YAML from 'yaml';
 import yamlLib from '../utils/yamllib';
-import {
-  buildManifest, buildPolicyYaml, compare, isAllowedChoice, parseDryRunFailure, parseDryRunLog
-} from '../utils/dryrun';
+import { buildDryRun, buildPolicyYaml, parseDryRunFailure, parseDryRunLog } from '../utils/dryrun';
 import { parseYaml } from '../utils/policy';
-import { simulate } from '../utils/simulate';
 const RAW = `apiVersion: "descheduler/v1alpha2"
 kind: "DeschedulerPolicy"
 maxNoOfPodsToEvictPerNode: 5
@@ -45,23 +41,40 @@ describe('buildPolicyYaml', () => {
     expect(() => buildPolicyYaml('profiles: []', F)).toThrow(/not configured/);
   });
 });
-describe('buildManifest', () => {
-  const m = buildManifest(buildPolicyYaml(RAW, F), 'registry.k8s.io/descheduler/descheduler:v0.33.0', new Date('2026-11-04T18:30:05Z'));
-  const docs = YAML.parseAllDocuments(m.yaml).map((d) => d.toJS());
+describe('buildDryRun', () => {
+  const container = {
+    image:           'registry.k8s.io/descheduler/descheduler:v0.33.0',
+    command:         ['/bin/descheduler'],
+    args:            ['--policy-config-file=/policy-dir/policy.yaml', '--descheduling-interval=5m', '--feature-gates=EvictionsInBackground=true', '--v=3'],
+    securityContext: { runAsNonRoot: true, runAsUser: 1000 }
+  };
+  const d = buildDryRun(buildPolicyYaml(RAW, F), container, 'descheduler', new Date('2026-11-04T18:30:05Z'));
+  const c = d.job.spec.template.spec.containers[0];
+  const cm = d.configMap('job-uid');
 
-  it('is valid YAML with a ConfigMap and a Job sharing a unique name', () => {
-    expect(m.name).toBe('descheduler-dry-run-20261104183005');
-    expect(docs.map((d) => d.kind)).toStrictEqual(['ConfigMap', 'Job']);
-    expect(docs[1].spec.template.spec.volumes[0].configMap.name).toBe(m.name);
+  it('names the Job and ConfigMap uniquely and mounts the policy', () => {
+    expect(d.name).toBe('descheduler-dry-run-20261104183005');
+    expect(d.job.spec.template.spec.volumes[0].configMap.name).toBe(d.name);
+    expect(cm.metadata.name).toBe(d.name);
   });
-  it('round-trips the policy and always passes --dry-run', () => {
-    expect(parseYaml(docs[0].data['policy.yaml'], yamlLib).maxNoOfPodsToEvictPerNode).toBe(2);
-    expect(docs[1].spec.template.spec.containers[0].args).toContain('--dry-run');
-    expect(docs[1].spec.template.spec.containers[0].args.join(' ')).not.toContain('descheduling-interval');
-    expect(docs[1].spec.template.metadata.labels['app.kubernetes.io/name']).toBe('descheduler-dry-run');
+  it('reuses the add-on container but runs one dry-run cycle', () => {
+    expect(c.image).toBe(container.image);
+    expect(c.securityContext).toStrictEqual(container.securityContext);
+    expect(c.args).toStrictEqual(['--policy-config-file=/policy-dir/policy.yaml', '--dry-run', '--feature-gates=EvictionsInBackground=true', '--v=3']);
+    expect(d.job.spec.template.metadata.labels['app.kubernetes.io/name']).toBe('descheduler-dry-run');
+  });
+  it('makes the ConfigMap owned by the Job so the TTL cleanup removes both', () => {
+    expect(cm.metadata.ownerReferences).toStrictEqual([{
+      apiVersion: 'batch/v1', kind: 'Job', name: d.name, uid: 'job-uid'
+    }]);
+    expect(parseYaml(cm.data['policy.yaml'], yamlLib).maxNoOfPodsToEvictPerNode).toBe(2);
+    expect(d.job.spec.ttlSecondsAfterFinished).toBe(3600);
+  });
+  it('refuses to build without an image', () => {
+    expect(() => buildDryRun('x', {})).toThrow('image');
   });
 });
-describe('parseDryRunLog / compare', () => {
+describe('parseDryRunLog', () => {
   const log = [
     'I1104 18:30:07.1       1 evictions.go:200] "Evicted pod in dry run mode" pod="labs/virt-launcher-a-1" reason="" strategy="LowNodeUtilization" node="harv02lab" profile="default"',
     'I1104 18:30:07.2       1 profile.go:376] "Total number of evictions/requests" evictedPods=1 evictionRequests=0',
@@ -78,13 +91,6 @@ describe('parseDryRunLog / compare', () => {
       }
     ]);
     expect(parseDryRunLog('')).toStrictEqual([]);
-  });
-  it('compares the simulation with the real decision', () => {
-    const sim = [{ namespace: 'labs', pod: 'virt-launcher-a-1' }, { namespace: 'labs', pod: 'virt-launcher-c-3' }];
-
-    expect(compare(sim, parseDryRunLog(log))).toStrictEqual({
-      agree: ['labs/virt-launcher-a-1'], onlySimulated: ['labs/virt-launcher-c-3'], onlyReal: ['labs/virt-launcher-b-2']
-    });
   });
 });
 describe('invalid policies', () => {
@@ -107,38 +113,5 @@ describe('excluded namespaces in the dry-run policy', () => {
   });
   it('drops the block when the list is emptied', () => {
     expect(parseYaml(buildPolicyYaml(RAW, { ...F, excluded: [] }), yamlLib).profiles[0].pluginConfig[1].args.evictableNamespaces).toBeUndefined();
-  });
-});
-describe('isAllowedChoice (a different pick is not necessarily a disagreement)', () => {
-  const GI = 1024 ** 3;
-  const node = (name) => ({ metadata: { name }, status: { allocatable: { cpu: '10', memory: `${ 100 * GI }` } } });
-  const vm = (name, on, cpu, memGi) => ({
-    metadata: {
-      name: `virt-launcher-${ name }`, namespace: 'default', labels: { 'kubevirt.io': 'virt-launcher', 'vm.kubevirt.io/name': name }
-    },
-    spec:     { nodeName: on, containers: [{ resources: { requests: { cpu, memory: `${ memGi }Gi` } } }] },
-    status:   { phase: 'Running', qosClass: 'Burstable' }
-  });
-  const T = { thresholds: { cpu: 30, memory: 30 }, targetThresholds: { cpu: 50, memory: 50 } };
-  // b has room for 4 cores / 40 GiB up to its target; the three VMs on a are all Burstable, priority 0 (a tie).
-  const nodes = [node('a'), node('b')];
-  const pods = [vm('small', 'a', '1', 10), vm('big', 'a', '5', 20), vm('mid', 'a', '1', 10), vm('q', 'b', '1', 10)];
-  const real = (...names) => names.map((n) => ({ pod: `default/virt-launcher-${ n }`, node: 'a' }));
-  const replay = (r) => simulate(nodes, pods, T, { nodeFit: true, order: r.map((e) => e.pod) }).evictions;
-
-  it('accepts a different VM when the same rules lead to it (the lab case)', () => {
-    // simulation alone: small first, so [small, big]; the real run happened to start with big, which uses up the room: [big]
-    expect(simulate(nodes, pods, T, { nodeFit: true }).evictions.map((e) => e.vm)).toStrictEqual(['small', 'big']);
-    expect(isAllowedChoice(replay(real('big')), real('big'))).toBe(true);
-  });
-  it('accepts the order that the simulation itself would use', () => {
-    expect(isAllowedChoice(replay(real('small', 'big')), real('small', 'big'))).toBe(true);
-  });
-  it('does not accept a run that stopped while the rules say there was room left', () => {
-    // evicting only "small" leaves room, so the rules would have gone on to evict another VM
-    expect(isAllowedChoice(replay(real('small')), real('small'))).toBe(false);
-  });
-  it('does not accept an eviction the rules would never make (e.g. a different node count)', () => {
-    expect(isAllowedChoice(replay(real('big', 'mid')), real('big', 'mid'))).toBe(false);
   });
 });

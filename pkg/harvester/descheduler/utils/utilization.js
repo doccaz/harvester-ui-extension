@@ -37,7 +37,11 @@ export function isActivePod(pod) {
 
   return phase !== 'Succeeded' && phase !== 'Failed';
 }
-const pct = (used, of) => (of > 0 ? Math.round((used / of) * 100) : 0);
+/**
+ * Exact percentage. Not rounded: the descheduler compares the raw ratio, so a node at 29.6% is underutilized against a 30%
+ * threshold. Round only for display (see `formatPct`).
+ */
+export const percent = (used, of) => (of > 0 ? (used / of) * 100 : 0);
 
 export function nodeUsage(node, pods) {
   const name = node?.metadata?.name;
@@ -50,8 +54,8 @@ export function nodeUsage(node, pods) {
     allocatable,
     requests,
     pods:      mine.length,
-    cpuPct:    pct(requests.cpu, allocatable.cpu),
-    memoryPct: pct(requests.memory, allocatable.memory)
+    cpuPct:    percent(requests.cpu, allocatable.cpu),
+    memoryPct: percent(requests.memory, allocatable.memory)
   };
 }
 /**
@@ -77,6 +81,12 @@ export function verdict(usages, t) {
   if (!t) {
     return {
       key: 'noPolicy', under: [], over: []
+    };
+  }
+  // Deviation mode compares each node with the cluster average, not with absolute values; it is not modelled, so no prediction.
+  if (t.useDeviationThresholds) {
+    return {
+      key: 'deviation', under: [], over: []
     };
   }
   const under = usages.filter((u) => classify(u, t) === 'under').map((u) => u.name);
