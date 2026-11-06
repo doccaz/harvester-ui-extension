@@ -11,7 +11,7 @@ describe('pre-flight checks on the lab snapshot (2026-11-06, after the kube-vip 
 
   it('matches hack/preflight.py: single-replica and GPU VM block, the rest passes', () => {
     expect(verdict(Object.values(r))).toStrictEqual({
-      block: 2, warn: 0, unknown: 0, pass: 14, skip: 0
+      block: 2, warn: 1, unknown: 0, pass: 16, skip: 0
     });
     expect(r.singleReplica.status).toBe('block');
     expect(r.nonMigratable.status).toBe('block');
@@ -79,6 +79,56 @@ describe('pre-flight checks on the lab snapshot (2026-11-06, after the kube-vip 
   it('checks the serving cert expiry', () => {
     expect(r.certExpiry.status).toBe('pass');
     expect(r.certExpiry.args.date).toBe('2027-04-30');
+  });
+});
+
+describe('advisory checks', () => {
+  it('lab: neither main node can be emptied by memory requests (gpu-node stays, it cannot migrate)', () => {
+    const m = byId(runChecks(lab)).memoryHeadroom;
+
+    expect(m.status).toBe('warn');
+    expect(m.advisory).toBe(true);
+    expect(m.items.map((i) => i.text).sort()).toStrictEqual(['harv01lab', 'harv02lab']);
+    expect(m.items.find((i) => i.text === 'harv01lab').reasonArgs.vms).not.toContain('gpu-node');
+  });
+
+  it('lab: etcd healthy on all three members', () => {
+    const e = byId(runChecks(lab)).etcdHealth;
+
+    expect(e.status).toBe('pass');
+    expect(e.args.n).toBe(3);
+  });
+
+  it('warns when an etcd member is not ready or missing', () => {
+    const s = clone(lab);
+
+    s.etcdPods = s.etcdPods.filter((p) => p.node !== 'harvlab-witness');
+    s.etcdPods[0].ready = false;
+    const e = byId(runChecks(s)).etcdHealth;
+
+    expect(e.status).toBe('warn');
+    expect(e.items.map((i) => i.text).sort()).toStrictEqual([s.etcdPods[0].node, 'harvlab-witness'].sort());
+  });
+
+  it('lists migrations that failed in the last 7 days only', () => {
+    const s = clone(lab);
+    const vmim = (days, phase) => ({
+      metadata: {
+        namespace: 'labs', name: `m${ days }`, creationTimestamp: new Date(s.now - days * 864e5).toISOString()
+      },
+      vmi:    'downstream-02',
+      phase,
+      source: 'harv01lab',
+      target: 'harv02lab',
+      reason: 'Unschedulable'
+    });
+
+    s.vmims = [vmim(1, 'Failed'), vmim(10, 'Failed'), vmim(1, 'Succeeded')];
+    const f = byId(runChecks(s)).failedMigrations;
+
+    expect(f.status).toBe('warn');
+    expect(f.items).toHaveLength(1);
+    expect(f.items[0].note).toBe('harv01lab → harv02lab: Unschedulable');
   });
 });
 
@@ -159,6 +209,32 @@ describe('pre-flight checks on variations', () => {
     s.nodes = s.nodes.slice(0, 2);
     s.lhVolumes[0].status.robustness = 'degraded';
     expect(byId(runChecks(s)).longhornDegraded.status).toBe('skip');
+  });
+});
+
+describe('a user without permissions', () => {
+  // Every read refused (403): each check must say "not checked" instead of guessing, and nothing may throw.
+  const keys = Object.keys(lab).filter((k) => !['errors', 'loadedAt', 'now'].includes(k));
+  const denied = { errors: Object.fromEntries(keys.map((k) => [k, '403 forbidden'])), now: lab.now };
+
+  it('marks every check as not checked', () => {
+    const results = runChecks(denied);
+
+    expect(results.every((c) => c.status === 'unknown')).toBe(true);
+    expect(byId(results).singleReplica.args.sources).toContain('nodes');
+  });
+
+  it('degrades per check when only some reads are refused', () => {
+    const s = clone(lab);
+
+    ['machines', 'managedCharts', 'bundleDeployments', 'kubelet'].forEach((k) => {
+      delete s[k];
+      s.errors[k] = '403 forbidden';
+    });
+    const r = byId(runChecks(s));
+
+    expect(['machines', 'managedCharts', 'diskSpace', 'etcdHealth'].map((id) => r[id].status)).toStrictEqual(['unknown', 'unknown', 'unknown', 'unknown']);
+    expect(r.singleReplica.status).toBe('block');
   });
 });
 

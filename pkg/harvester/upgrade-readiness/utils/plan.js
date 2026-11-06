@@ -9,7 +9,7 @@
  * Pauses (Harvester v1.8.2): `upgrade-config` is read once, when the Upgrade is created (manual mode: `pauseNodes`, or all
  * nodes when empty; unknown names are dropped). During an upgrade, its `harvesterhci.io/node-upgrade-pause-map` rules.
  */
-import { WITNESS_LABEL } from './checks';
+import { WITNESS_LABEL } from './constants';
 
 const ROLE = {
   etcd: 'rke.cattle.io/etcd-role', cp: 'rke.cattle.io/control-plane-role', worker: 'rke.cattle.io/worker-role'

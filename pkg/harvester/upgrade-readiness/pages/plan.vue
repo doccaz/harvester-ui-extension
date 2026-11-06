@@ -8,7 +8,7 @@ import { loadSnapshot } from '../utils/snapshot';
 import { runChecks } from '../utils/checks';
 import { moveLoad, pausePlan, planNotes, predictOrder } from '../utils/plan';
 import { useTranslation } from '../utils/i18n';
-import { HARVESTER_PRODUCT } from '../config/names';
+import { HARVESTER_PRODUCT, PAGES } from '../config/names';
 
 // "Upgrade plan": node order, where the upgrade will wait for you, and what happens to each node's VMs. Read-only.
 const t = useTranslation();
@@ -36,6 +36,25 @@ const notes = computed(() => (pause.value ? planNotes(order.value, pause.value) 
 // VMs that cannot live-migrate are shut down, not moved: same rule as the pre-flight check.
 const stay = computed(() => new Set(snap.value ? (runChecks(snap.value).find((c) => c.id === 'nonMigratable')?.items || []).map((i) => i.text) : []));
 const load = computed(() => (snap.value?.pods && snap.value?.nodes ? moveLoad(snap.value.nodes, snap.value.pods, stay.value) : null));
+const checks = computed(() => (snap.value ? runChecks(snap.value) : []));
+const blockers = computed(() => checks.value.filter((c) => c.status === 'block'));
+// Per step: 'stall' (VMs cannot move off -> the upgrade will likely stop here), 'action' (VMs to shut down first), 'ok'.
+const stepState = (node) => {
+  const l = load.value?.[node];
+
+  if (l?.unplaced.length) {
+    return 'stall';
+  }
+
+  return l?.staying.length ? 'action' : 'ok';
+};
+const stalls = computed(() => order.value.filter((e) => stepState(e.node) === 'stall'));
+const verdict = computed(() => (blockers.value.length || stalls.value.length ? 'fail' : 'ok'));
+const blockersLink = computed(() => ({ name: PAGES.readiness.route, params: { product: HARVESTER_PRODUCT, cluster: route.params.cluster || 'local' } }));
+const STEP_ICON = {
+  ok: 'icon-checkmark', action: 'icon-warning', stall: 'icon-error'
+};
+
 const gate = (node) => (pause.value?.released.includes(node) ? 'released' : (pause.value?.paused.includes(node) ? 'waits' : 'noStop'));
 
 const bannerText = computed(() => {
@@ -97,9 +116,64 @@ onMounted(refresh);
 
     <template v-else-if="pause">
       <div
+        class="verdict"
+        :class="verdict"
         role="status"
         aria-live="polite"
       >
+        <i
+          class="icon"
+          :class="verdict === 'ok' ? 'icon-checkmark' : 'icon-error'"
+          aria-hidden="true"
+        />
+        <div>
+          <b>{{ k(`verdict.${ verdict }`) }}</b>
+          <ul
+            v-if="verdict === 'fail'"
+            class="reasons"
+          >
+            <li v-if="blockers.length">
+              {{ k('verdict.blocked', { n: blockers.length }) }}
+              <router-link :to="blockersLink">
+                {{ k('verdict.seeBlockers') }}
+              </router-link>
+            </li>
+            <li
+              v-for="e in stalls"
+              :key="e.node"
+            >
+              {{ k('verdict.stall', { step: e.position, node: e.node, n: load[e.node].unplaced.length }) }}
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <ol
+        class="track"
+        :aria-label="k('track')"
+      >
+        <li class="ok">
+          <span class="dot">0</span>
+          <span class="name">{{ k('services.short') }}</span>
+        </li>
+        <li
+          v-for="e in order"
+          :key="e.node"
+          :class="stepState(e.node)"
+        >
+          <span class="dot">
+            <i
+              class="icon"
+              :class="STEP_ICON[stepState(e.node)]"
+              aria-hidden="true"
+            />
+          </span>
+          <span class="name">{{ e.position }}. {{ e.node }}</span>
+          <span class="sr-only">{{ k(`state.${ stepState(e.node) }`) }}</span>
+        </li>
+      </ol>
+
+      <div>
         <Banner :color="pause.mode === 'manual' ? 'info' : 'secondary'">
           <span>{{ bannerText }}</span>
           <router-link
@@ -140,7 +214,7 @@ onMounted(refresh);
           v-for="e in order"
           :key="e.node"
           class="step"
-          :class="gate(e.node)"
+          :class="[gate(e.node), stepState(e.node)]"
         >
           <span
             class="num"
@@ -170,6 +244,11 @@ onMounted(refresh);
                 v-if="e.roles.cp"
                 class="tag"
               >{{ k('tag.cp') }}</span>
+              <span
+                v-if="stepState(e.node) !== 'ok'"
+                class="state"
+                :class="stepState(e.node)"
+              >{{ k(`state.${ stepState(e.node) }`) }}</span>
               <span
                 class="gate"
                 :class="gate(e.node)"
@@ -233,6 +312,34 @@ onMounted(refresh);
   margin-left: auto; padding: 0 10px; border-radius: 10px; font-size: 12px; border: 1px solid var(--border);
   &.waits { border-color: var(--warning); }
   &.released { border-color: var(--success); }
+}
+.verdict {
+  display: flex; gap: 12px; align-items: flex-start; padding: 12px 16px; margin-bottom: 12px; border-radius: 4px; border-left: 4px solid var(--success);
+  background: var(--success-banner-bg); font-size: 15px;
+  &.fail { border-left-color: var(--error); background: var(--error-banner-bg); }
+  .icon { font-size: 20px; margin-top: 2px; }
+  &.ok .icon { color: var(--success); }
+  &.fail .icon { color: var(--error); }
+  .reasons { margin: 4px 0 0; padding-left: 18px; font-size: 14px; }
+}
+.track {
+  display: flex; flex-wrap: wrap; list-style: none; padding: 0; margin: 4px 0 16px; gap: 0;
+  li { display: flex; align-items: center; gap: 6px; padding-right: 28px; position: relative; }
+  li:not(:last-child)::after { content: ''; position: absolute; right: 6px; top: 50%; width: 16px; border-top: 2px solid var(--border); }
+  .dot {
+    display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid var(--success); font-size: 12px; font-weight: bold;
+  }
+  .ok .icon { color: var(--success); }
+  .action .dot { border-color: var(--warning); } .action .icon { color: var(--warning); }
+  .stall .dot { border-color: var(--error); } .stall .icon { color: var(--error); }
+  .stall .name { font-weight: 600; }
+}
+.step.stall { border-left: 4px solid var(--error); padding-left: 10px; }
+.step.action { border-left: 4px solid var(--warning); padding-left: 10px; }
+.state {
+  padding: 0 10px; border-radius: 10px; font-size: 12px; border: 1px solid var(--error); font-weight: 600;
+  &.action { border-color: var(--warning); }
 }
 .problem { padding-left: 8px; border-left: 3px solid var(--error); &.warn { border-left-color: var(--warning); } }
 .why { margin-top: 16px; summary { cursor: pointer; color: var(--link); } p { margin: 6px 0 0; } }

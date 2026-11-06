@@ -1,6 +1,6 @@
 {
  "errors": {},
- "loadedAt": "2026-11-06T18:13:16.928Z",
+ "loadedAt": "2026-11-06T18:49:08.586Z",
  "nodes": [
   {
    "metadata": {
@@ -5808,6 +5808,45 @@
    }
   }
  ],
+ "etcdPods": [
+  {
+   "node": "harv01lab",
+   "ready": true,
+   "restarts": 5,
+   "phase": "Running"
+  },
+  {
+   "node": "harv02lab",
+   "ready": true,
+   "restarts": 7,
+   "phase": "Running"
+  },
+  {
+   "node": "harvlab-witness",
+   "ready": true,
+   "restarts": 21,
+   "phase": "Running"
+  }
+ ],
+ "vmims": [
+  {
+   "metadata": {
+    "name": "kubevirt-evacuation-vlqms",
+    "namespace": "labs",
+    "annotations": {
+     "kubevirt.io/evacuationMigration": "harv01lab",
+     "kubevirt.io/latest-observed-api-version": "v1",
+     "kubevirt.io/storage-observed-api-version": "v1"
+    },
+    "creationTimestamp": "2026-10-31T19:21:51Z"
+   },
+   "vmi": "rancher-lb",
+   "phase": "Succeeded",
+   "source": "harv01lab",
+   "target": "harv02lab",
+   "reason": ""
+  }
+ ],
  "planSecrets": [
   {
    "metadata": {
@@ -7116,21 +7155,21 @@
  ],
  "kubelet": {
   "harv01lab": {
-   "usedBytes": 134214524928,
+   "usedBytes": 134207643648,
    "capacityBytes": 368766496768,
    "gcHigh": 85
   },
   "harv02lab": {
-   "usedBytes": 148589244416,
+   "usedBytes": 148609642496,
    "capacityBytes": 210241560576,
    "gcHigh": 85
   },
   "harvlab-witness": {
-   "usedBytes": 33228427264,
+   "usedBytes": 33233481728,
    "capacityBytes": 712803852288,
    "gcHigh": 85
   }
  },
  "certNotAfter": "2027-04-30T19:15:43.000Z",
- "now": 1793988796928
+ "now": 1793990948586
 }

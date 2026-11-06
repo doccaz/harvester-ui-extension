@@ -22,6 +22,16 @@ describe('checkCard', () => {
     Object.values(results).forEach((check) => expect(() => render(check)).not.toThrow());
   });
 
+  it('renders "not checked" cards for a user who may read nothing', () => {
+    const denied = { errors: Object.fromEntries(Object.keys(lab).map((k) => [k, '403 forbidden'])), now: lab.now };
+
+    runChecks(denied).forEach((check) => {
+      const w = render(check);
+
+      expect(w.text()).toContain('upgradeReadiness.unknown');
+    });
+  });
+
   it('titles a failing check by its problem', () => {
     expect(render(results.nonMigratable).find('h2').text()).toBe('harvester.upgradeReadiness.check.nonMigratable.problem');
   });

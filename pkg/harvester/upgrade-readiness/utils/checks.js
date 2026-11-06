@@ -9,8 +9,10 @@
  *   fixes:  [{ kind: 'goto' | 'copy' | 'option', labelKey, to?, command? }]
  */
 import { explainChart, fixCommands, fleetAttempts, freshness } from './drift';
+import { moveLoad } from './plan';
+import { WITNESS_LABEL } from './constants';
 
-export const WITNESS_LABEL = 'node-role.harvesterhci.io/witness';
+export { WITNESS_LABEL };
 export const NEW_IMAGES_BYTES = 13 * 1024 ** 3; // defaultNewImageSize
 export const GC_DEFAULT = 85; // defaultImageGCHighThresholdPercent
 export const CERT_MIN_DAYS = 7; // defaultMinCertsExpirationInDay
@@ -304,32 +306,7 @@ const CHECKS = {
     if (nw.length === 1) {
       return result('nonMigratable', 'skip', { args: { reason: 'single' } });
     }
-    const items = [];
-
-    s.vmis.forEach((i) => {
-      const vm = { metadata: i.metadata };
-
-      // Same order as the webhook. `reason` picks the plain-language explanation shown next to the VM.
-      if (i.spec.nodeSelector) {
-        items.push({
-          text: nsName(i), reason: 'nodeSelector', reasonArgs: { selector: Object.entries(i.spec.nodeSelector).map(([a, b]) => `${ a }=${ b }`).join(', ') }, link: link(TYPES.VM, vm)
-        });
-      } else if (i.spec.hostDevices) {
-        items.push({
-          text: nsName(i), reason: 'device', reasonArgs: { devices: i.spec.hostDevices.map(deviceName).join(', ') }, link: link(TYPES.VM, vm)
-        });
-      } else {
-        const req = i.spec.affinity?.nodeAffinity?.requiredDuringSchedulingIgnoredDuringExecution;
-        const targets = nw.filter((n) => n.metadata.name !== i.status.nodeName);
-        const ok = targets.some((n) => !n.spec.unschedulable && (!req || matchesTerms(n, req)));
-
-        if (!ok) {
-          items.push({
-            text: nsName(i), reason: 'affinity', reasonArgs: {}, link: link(TYPES.VM, vm)
-          });
-        }
-      }
-    });
+    const items = nonMigratableItems(s, nw);
 
     return result('nonMigratable', items.length ? 'block' : 'pass', { items });
   }),
@@ -358,6 +335,50 @@ const CHECKS = {
     const days = Math.floor((Date.parse(s.certNotAfter) - (s.now ?? Date.now())) / DAY);
 
     return result('certExpiry', days > CERT_MIN_DAYS ? 'pass' : 'block', { args: { date: s.certNotAfter.slice(0, 10), days } });
+  }),
+  // ---- advisory: never block, but worth knowing before an upgrade ----
+
+  etcdHealth: (s) => guarded('etcdHealth', s, ['etcdPods', 'machines'], () => {
+    const etcdNodes = s.machines.filter((m) => m.metadata.labels?.['rke.cattle.io/etcd-role'] === 'true').map((m) => m.status.nodeRef).filter(Boolean);
+    const items = etcdNodes.map((node) => {
+      const p = s.etcdPods.find((x) => x.node === node);
+
+      return {
+        text: node, note: p ? `${ p.ready ? 'ready' : 'NOT ready' }, ${ p.restarts } restart(s)` : 'no etcd pod', bad: !p || !p.ready
+      };
+    });
+    const bad = items.filter((x) => x.bad);
+
+    return result('etcdHealth', bad.length ? 'warn' : 'pass', {
+      items: bad.length ? bad : items, args: { n: etcdNodes.length }, advisory: true
+    });
+  }),
+
+  failedMigrations: (s) => guarded('failedMigrations', s, ['vmims'], () => {
+    const since = (s.now ?? Date.now()) - 7 * 24 * 3600 * 1000;
+    const failed = s.vmims.filter((m) => m.phase === 'Failed' && Date.parse(m.metadata.creationTimestamp) >= since);
+
+    return result('failedMigrations', failed.length ? 'warn' : 'pass', {
+      items: failed.map((m) => ({
+        text: `${ m.metadata.namespace }/${ m.vmi }`, note: `${ m.source || '?' } → ${ m.target || '?' }${ m.reason ? `: ${ m.reason }` : '' }`, link: link(TYPES.VM, { metadata: { namespace: m.metadata.namespace, name: m.vmi } })
+      })),
+      advisory: true
+    });
+  }),
+
+  memoryHeadroom: (s) => guarded('memoryHeadroom', s, ['nodes', 'pods', 'vmis'], () => {
+    const stay = new Set(nonWitness(s.nodes).length > 1 ? nonMigratableItems(s).map((i) => i.text) : []);
+    const load = moveLoad(s.nodes, s.pods, stay);
+    const gib = (b) => (b / 2 ** 30).toFixed(1);
+    const items = Object.entries(load).filter(([, l]) => l.unplaced.length).map(([node, l]) => ({
+      text:       node,
+      reason:     'unplaced',
+      reasonArgs: {
+        n: l.unplaced.length, total: l.moving.length, targets: l.targets.join(', ') || '—', vms: l.unplaced.map((v) => `${ v.vm } (${ gib(v.memory) } GiB)`).join(', ')
+      }
+    }));
+
+    return result('memoryHeadroom', items.length ? 'warn' : 'pass', { items, advisory: true });
   })
 };
 
@@ -399,6 +420,38 @@ export function compareVersions(a, b) {
   }
 
   return x.pre.localeCompare(y.pre, undefined, { numeric: true });
+}
+
+/** VMs that cannot live-migrate (webhook rule: node selector, PCI/USB device, or no other node matches its affinity). */
+export function nonMigratableItems(s, nw = nonWitness(s.nodes)) {
+  const items = [];
+
+  s.vmis.forEach((i) => {
+    const vm = { metadata: i.metadata };
+
+    // Same order as the webhook. `reason` picks the plain-language explanation shown next to the VM.
+    if (i.spec.nodeSelector) {
+      items.push({
+        text: nsName(i), reason: 'nodeSelector', reasonArgs: { selector: Object.entries(i.spec.nodeSelector).map(([a, b]) => `${ a }=${ b }`).join(', ') }, link: link(TYPES.VM, vm)
+      });
+    } else if (i.spec.hostDevices) {
+      items.push({
+        text: nsName(i), reason: 'device', reasonArgs: { devices: i.spec.hostDevices.map(deviceName).join(', ') }, link: link(TYPES.VM, vm)
+      });
+    } else {
+      const req = i.spec.affinity?.nodeAffinity?.requiredDuringSchedulingIgnoredDuringExecution;
+      const targets = nw.filter((n) => n.metadata.name !== i.status.nodeName);
+      const ok = targets.some((n) => !n.spec.unschedulable && (!req || matchesTerms(n, req)));
+
+      if (!ok) {
+        items.push({
+          text: nsName(i), reason: 'affinity', reasonArgs: {}, link: link(TYPES.VM, vm)
+        });
+      }
+    }
+  });
+
+  return items;
 }
 
 function restoreVM(s) {

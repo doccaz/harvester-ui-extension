@@ -24,7 +24,7 @@ const passedOpen = ref(false);
 async function refresh() {
   loading.value = true;
   try {
-    results.value = runChecks(await loadSnapshot(clusterRequest(store), certFromStore(store)));
+    results.value = runChecks(await loadSnapshot(clusterRequest(store), certFromStore(store), { extra: ['pods'] }));
     setBlockerCount(results.value);
     loadedAt.value = new Date();
   } finally {

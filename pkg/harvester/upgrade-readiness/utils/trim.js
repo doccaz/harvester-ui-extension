@@ -146,6 +146,20 @@ export const TRIM = {
   images: (r) => list(r).filter((i) => /^harvester-v.*\.iso$/i.test(i?.spec?.displayName || '')).map((i) => ({
     metadata: meta(i), spec: { displayName: i.spec.displayName }, status: { progress: i?.status?.progress ?? null }
   })),
+  etcdPods: (r) => list(r).map((p) => ({
+    node:     p?.spec?.nodeName || '',
+    ready:    (p?.status?.conditions || []).find((c) => c.type === 'Ready')?.status === 'True',
+    restarts: (p?.status?.containerStatuses || []).reduce((a, c) => a + (c.restartCount || 0), 0),
+    phase:    p?.status?.phase || ''
+  })),
+  vmims: (r) => list(r).map((m) => ({
+    metadata: meta(m, { created: true, annotations: true }),
+    vmi:      m?.spec?.vmiName || '',
+    phase:    m?.status?.phase || '',
+    source:   m?.status?.migrationState?.sourceNode || '',
+    target:   m?.status?.migrationState?.targetNode || '',
+    reason:   m?.status?.migrationState?.failureReason || (m?.status?.conditions || []).map((c) => c.message || c.reason).filter(Boolean).join('; ') || ''
+  })),
   k3sAddons: (r) => list(r).map((a) => ({ metadata: meta(a), spec: { source: a?.spec?.source || '' } })),
   vms:       (r) => list(r).map((v) => ({
     metadata: meta(v),

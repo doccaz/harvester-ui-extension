@@ -1239,6 +1239,7 @@ harvester:
       unknown: Not checked
       skip: Skipped
       pass: OK
+      advisory: Advisory
     why: Why does this matter?
     unknown: 'Could not read {sources}; you may not have permission to see it.'
     showMore: 'Show {n} more'
@@ -1253,6 +1254,17 @@ harvester:
     plan:
       title: Upgrade plan
       subtitle: 'The order the nodes will be upgraded in, one at a time. Read-only.'
+      verdict:
+        ok: 'No problems expected with this plan.'
+        fail: 'This upgrade will probably not go through as it stands.'
+        blocked: 'It cannot start: {n} blocker(s).'
+        seeBlockers: See Blockers
+        stall: 'Likely to stall at step {step} ({node}): {n} VM(s) cannot move off it.'
+      track: Plan at a glance
+      state:
+        ok: no problem expected
+        action: Action needed
+        stall: Likely to stall here
       changePause: Change pause settings
       stepNo: 'Step {n}:'
       mode:
@@ -1266,6 +1278,7 @@ harvester:
         singleNode: 'Single-node cluster: the node is upgraded in place; its VMs are stopped, not moved.'
       services:
         title: Cluster services
+        short: Services
         text: 'Harvester, KubeVirt and the system charts are upgraded first. There is no pause here.'
       tag:
         init: 'etcd init node: always first'
@@ -1379,6 +1392,26 @@ harvester:
       copyFleetRetry: 'Retry now:'
       optionSkipDetached: 'Detached volumes: tick "Skip checking single-replica detached volumes" in the upgrade dialog.'
     check:
+      etcdHealth:
+        title: 'etcd healthy'
+        problem: 'etcd not healthy'
+        ok: 'All {n} etcd members are ready.'
+        why: 'Each node upgrade restarts one etcd member; if another member is already down, the cluster can lose quorum.'
+        do: 'Bring the etcd member back (check the node and its etcd pod) before upgrading.'
+      failedMigrations:
+        title: 'No recent failed migrations'
+        problem: 'VM migrations failed recently'
+        ok: 'No VM migration failed in the last 7 days (KubeVirt keeps only recent migrations).'
+        why: 'The upgrade moves VMs the same way; whatever made these fail can stall the upgrade.'
+        do: 'Look at why they failed (often not enough memory on the target node) and fix it first.'
+      memoryHeadroom:
+        title: 'Enough memory to empty each node'
+        problem: 'Not enough memory to empty a node'
+        ok: 'Every node can be emptied onto the others (by memory requests, approximate).'
+        why: 'Before a node is upgraded, its VMs move to the other nodes. VMs that do not fit stay put and the upgrade stalls at that node.'
+        do: 'Free memory on the other nodes, or stop the listed VMs for the upgrade. See Upgrade Plan for the order.'
+        reason:
+          unplaced: '{n} of {total} VM(s) would not fit on {targets}: {vms}'
       upgradeRunning:
         title: 'No other upgrade running'
         problem: 'Another upgrade is running'

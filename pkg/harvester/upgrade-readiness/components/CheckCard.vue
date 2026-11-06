@@ -65,6 +65,10 @@ function details(item) {
     <template #title>
       <h2 class="check-title">
         {{ title }}
+        <span
+          v-if="check.advisory"
+          class="advisory"
+        >{{ t('harvester.upgradeReadiness.status.advisory') }}</span>
       </h2>
     </template>
     <template
@@ -249,6 +253,7 @@ function details(item) {
 <style lang="scss" scoped>
 .check { margin-bottom: 12px; }
 .check-title { font-size: 16px; margin: 0; font-weight: 600; }
+.advisory { margin-left: 8px; padding: 0 8px; border: 1px solid var(--border); border-radius: 10px; font-size: 12px; font-weight: normal; vertical-align: middle; }
 .body { font-size: 14px; p { margin: 8px 0; } }
 .items {
   border-collapse: collapse; margin: 4px 0 8px; width: 100%;
