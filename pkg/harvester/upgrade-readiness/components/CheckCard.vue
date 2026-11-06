@@ -148,6 +148,33 @@ function details(item) {
                 </td>
               </tr>
               <tr
+                v-if="item.stopToFit?.length"
+                class="hint-row"
+              >
+                <td :colspan="item.disk !== undefined ? 4 : 3">
+                  <p class="hint">
+                    {{ t('harvester.upgradeReadiness.stopToFit.text', { n: item.stopToFit.length, node: item.text }) }}
+                    <InfoTip
+                      :text="t('harvester.upgradeReadiness.stopToFit.why', { node: item.text })"
+                      :label="t('harvester.upgradeReadiness.stopToFit.label')"
+                    />
+                  </p>
+                  <ul class="stop-list">
+                    <li
+                      v-for="s in item.stopToFit"
+                      :key="s.vm"
+                    >
+                      <span>{{ s.vm }} ({{ s.gib }} GiB)</span>
+                      <ConfirmAction
+                        kind="stopVM"
+                        :target="s.vm"
+                        :label="t('harvester.upgradeReadiness.action.label.stopVM')"
+                      />
+                    </li>
+                  </ul>
+                </td>
+              </tr>
+              <tr
                 v-for="sr in (showStuck(item) ? item.stuckReplicas : [])"
                 :key="`${ i }-${ sr.name }`"
                 class="hint-row"
@@ -272,6 +299,7 @@ function details(item) {
   .tags { white-space: nowrap; }
   .hint-row td { padding: 0 0 10px 16px; border-left: 3px solid var(--warning); }
   .hint { margin: 2px 0 6px; }
+  .stop-list { margin: 0; padding-left: 18px; li { margin: 2px 0; } span { margin-right: 8px; } }
 }
 .tag {
   display: inline-block; margin-right: 6px; padding: 0 8px; border: 1px solid var(--border); border-radius: 10px; font-size: 12px;

@@ -99,4 +99,19 @@ describe('checkCard', () => {
 
     expect(render(pass).findAllComponents(InfoTip)).toHaveLength(0);
   });
+
+  it('memory headroom: lists the fewest VMs to stop per node, each with its own Stop button', () => {
+    const w = render(results.memoryHeadroom);
+    const rows = w.findAll('.stop-list');
+
+    expect(rows).toHaveLength(2);
+    expect(rows[0].findAll('li').map((li) => li.text())).toStrictEqual([
+      expect.stringContaining('labs/downstream-02 (16.5 GiB)'),
+      expect.stringContaining('labs/rancher-host-3 (9.6 GiB)'),
+      expect.stringContaining('labs/sles16-01 (3.1 GiB)')
+    ]);
+    expect(rows[0].findAllComponents({ name: 'ConfirmAction' }).map((c) => [c.props('kind'), c.props('target')])).toStrictEqual([
+      ['stopVM', 'labs/downstream-02'], ['stopVM', 'labs/rancher-host-3'], ['stopVM', 'labs/sles16-01']
+    ]);
+  });
 });

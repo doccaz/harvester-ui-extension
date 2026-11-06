@@ -1335,6 +1335,8 @@ harvester:
         none: 'No VMs to move.'
         staying: 'Shut down before this step (cannot live-migrate): {vms}.'
         unplaced: 'Not enough free memory on {targets} for: {vms}. They may fail to migrate.'
+        stopToFit: 'Stopping {vms} ({gib} GiB) for this step lets the rest fit.'
+        stopWhere: Stop them from Blockers
       why:
         summary: Why this order?
         text: 'Rancher decides it: the etcd init node first, then the other etcd nodes one at a time by machine name, then control-plane and worker nodes. Pausing a node stops the upgrade before that node; it cannot change the order. Memory figures are requests, as the scheduler counts them, against free memory now (approximate).'
@@ -1380,6 +1382,10 @@ harvester:
       label: Allow changes from these pages
       disabledHint: 'Read-only. Turn on to stop VMs, suspend schedules, uncordon nodes or hold and release nodes from here (each asks first).'
       enabledHint: 'On for this browser tab until you reload. Every change asks for confirmation and uses the same API as the Harvester UI.'
+    stopToFit:
+      text: 'To empty {node}, stop these {n} VM(s) for the upgrade; the rest fit:'
+      label: How these were chosen
+      why: 'The fewest VMs, then the least memory, so as much as possible keeps running. Check what a VM runs before stopping it (a Kubernetes node: drain it first). Start them again once {node} is upgraded. Approximate: memory requests only.'
     action:
       confirmButton: Confirm
       cancel: Cancel
@@ -1483,7 +1489,7 @@ harvester:
         problem: 'Not enough memory to empty a node'
         ok: 'Every node can be emptied onto the others (by memory requests, approximate).'
         why: 'Before a node is upgraded, its VMs move to the other nodes. VMs that do not fit stay put and the upgrade stalls at that node.'
-        do: 'Free memory on the other nodes, or stop the listed VMs for the upgrade. See Upgrade Plan for the order.'
+        do: 'Stop the suggested VMs for the upgrade, or free memory on the other nodes. See Upgrade Plan for the order.'
         reason:
           unplaced: '{n} of {total} VM(s) would not fit on {targets}: {vms}'
       upgradeRunning:

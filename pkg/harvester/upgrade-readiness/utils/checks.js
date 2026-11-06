@@ -383,7 +383,9 @@ const CHECKS = {
       reason:     'unplaced',
       reasonArgs: {
         n: l.unplaced.length, total: l.moving.length, targets: l.targets.join(', ') || '—', vms: l.unplaced.map((v) => `${ v.vm } (${ gib(v.memory) } GiB)`).join(', ')
-      }
+      },
+      // The fewest VMs to stop so the others fit (null: no node can take VMs at all).
+      stopToFit: l.stop && l.stop.map((v) => ({ vm: v.vm, gib: gib(v.memory) }))
     }));
 
     return result('memoryHeadroom', items.length ? 'warn' : 'pass', { items, advisory: true });

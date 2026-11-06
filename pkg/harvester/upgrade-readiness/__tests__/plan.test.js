@@ -1,6 +1,9 @@
 import lab from './fixtures/lab-2026-11-06.json';
-import { moveLoad, pausePlan, planNotes, predictOrder } from '../utils/plan';
+import {
+  moveLoad, pausePlan, planNotes, predictOrder, stopToFit
+} from '../utils/plan';
 import { parseBytes, podMemoryRequest } from '../utils/trim';
+import { nonMigratableItems } from '../utils/checks';
 
 const clone = (o) => JSON.parse(JSON.stringify(o));
 const GI = 2 ** 30;
@@ -124,5 +127,71 @@ describe('quantities', () => {
     };
 
     expect(podMemoryRequest(pod)).toBe(3 * GI + 100 * 2 ** 20);
+  });
+});
+
+describe('stopToFit', () => {
+  const G = 2 ** 30;
+  const vm = (name, gib) => ({ vm: `ns/${ name }`, memory: gib * G });
+
+  it('nothing to stop when everything fits', () => {
+    expect(stopToFit([vm('a', 4), vm('b', 4)], { t: 10 * G })).toStrictEqual([]);
+  });
+
+  it('null when no node can take VMs', () => {
+    expect(stopToFit([vm('a', 4)], {})).toBeNull();
+  });
+
+  it('stops the fewest VMs, not the biggest first', () => {
+    // 10 GiB free: stopping 7 leaves 6+4=10 (fits); stopping 6 leaves 11, stopping 4 leaves 13 (no).
+    expect(stopToFit([vm('a', 7), vm('b', 6), vm('c', 4)], { t: 10 * G }).map((v) => v.vm)).toStrictEqual(['ns/a']);
+  });
+
+  it('between equally few, stops the least memory', () => {
+    // 11 GiB free: stopping the 6 (leaves 10) or a 5 (leaves 11) both work with one VM; the 5 GiB one stops less.
+    expect(stopToFit([vm('a', 6), vm('b', 5), vm('c', 5)], { t: 11 * G }).map((v) => v.vm)).toStrictEqual(['ns/b']);
+  });
+
+  it('respects how VMs pack across several nodes', () => {
+    // Two nodes with 5 free each: 6 never fits anywhere, 5+5 fit. Must stop exactly the 6.
+    expect(stopToFit([vm('a', 6), vm('b', 5), vm('c', 5)], { x: 5 * G, y: 5 * G }).map((v) => v.vm)).toStrictEqual(['ns/a']);
+  });
+
+  it('lab: the fewest VMs to stop per node, and the rest really fit', () => {
+    const stay = new Set(nonMigratableItems(lab).map((i) => i.text));
+    const l = moveLoad(lab.nodes, lab.pods, stay);
+
+    expect(l.harv01lab.stop.map((v) => v.vm)).toStrictEqual(['labs/downstream-02', 'labs/rancher-host-3', 'labs/sles16-01']);
+    expect(l.harv02lab.stop.map((v) => v.vm)).toStrictEqual(['labs/rancher-host-2', 'labs/rancher-lb']);
+    expect(l['harvlab-witness'].stop).toStrictEqual([]);
+    // Re-running the plan with the suggested VMs stopped leaves nothing unplaced on that node.
+    ['harv01lab', 'harv02lab'].forEach((node) => {
+      const stopped = new Set([...stay, ...l[node].stop.map((v) => v.vm)]);
+
+      expect(moveLoad(lab.nodes, lab.pods, stopped)[node].unplaced).toHaveLength(0);
+    });
+  });
+
+  it('finds the fewest even where stopping one VM at a time does not', () => {
+    // Nodes with 7 and 8 GiB free; VMs 5, 5, 7, 7, 3. Stopping the two 7s leaves 5+3 | 5 (fits). Picking the best single VM
+    // each round ends up stopping three (5, 5, 3).
+    const stop = stopToFit([vm('a', 5), vm('b', 5), vm('c', 7), vm('d', 7), vm('e', 3)], { x: 7 * G, y: 8 * G });
+
+    expect(stop.map((v) => v.vm)).toStrictEqual(['ns/c', 'ns/d']);
+  });
+
+  it('greedy fallback (many VMs) still picks well: one big VM, not many small ones', () => {
+    const many = [vm('big', 20), ...Array.from({ length: 14 }, (_, i) => vm(`s${ i }`, 1))];
+
+    expect(stopToFit(many, { x: 14 * G }).map((v) => v.vm)).toStrictEqual(['ns/big']);
+  });
+
+  it('falls back to greedy for many VMs and still makes them fit', () => {
+    const many = Array.from({ length: 20 }, (_, i) => vm(`v${ i }`, 1 + (i % 5)));
+    const stop = stopToFit(many, { x: 20 * G, y: 15 * G });
+    const rest = many.filter((v) => !stop.includes(v));
+
+    expect(stopToFit(rest, { x: 20 * G, y: 15 * G })).toStrictEqual([]);
+    expect(stop.length).toBeLessThan(many.length);
   });
 });

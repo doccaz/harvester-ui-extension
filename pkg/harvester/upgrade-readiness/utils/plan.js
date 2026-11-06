@@ -93,11 +93,87 @@ export function pausePlan(upgradeConfig, nodes = [], upgrades = []) {
   };
 }
 
+/** First-fit decreasing: each VM goes to the target with the most free memory. Returns the VMs that do not fit. */
+function place(moving, free) {
+  const left = { ...free };
+  const unplaced = [];
+
+  [...moving].sort((a, b) => b.memory - a.memory).forEach((v) => {
+    const best = Object.entries(left).sort((a, b) => b[1] - a[1])[0];
+
+    if (best && best[1] >= v.memory) {
+      left[best[0]] -= v.memory;
+    } else {
+      unplaced.push(v);
+    }
+  });
+
+  return unplaced;
+}
+
+const sum = (vms) => vms.reduce((a, v) => a + v.memory, 0);
+
+/** All k-element subsets of `list`, in order. */
+function* subsets(list, k, from = 0, pick = []) {
+  if (pick.length === k) {
+    yield pick;
+
+    return;
+  }
+  for (let i = from; i <= list.length - (k - pick.length); i++) {
+    yield * subsets(list, k, i + 1, [...pick, list[i]]);
+  }
+}
+
+// Above this many VMs on one node, the exact search is replaced by a greedy one (2^14 placements is still instant).
+const EXACT_MAX = 14;
+
+/**
+ * Which VMs to stop so that the rest fit, for one node's step: the fewest VMs, then the least memory stopped (keeps as much
+ * running as possible). Exact for up to EXACT_MAX VMs; above that, greedy (stop the VM that leaves the least unplaced).
+ * Empty when everything fits; null when there is nowhere to move VMs (stopping them all is the only option).
+ */
+export function stopToFit(moving, free) {
+  if (!Object.keys(free).length) {
+    return null;
+  }
+  const fits = (stopped) => !place(moving.filter((v) => !stopped.includes(v)), free).length;
+
+  if (moving.length <= EXACT_MAX) {
+    for (let k = 0; k <= moving.length; k++) {
+      let best = null;
+
+      for (const pick of subsets(moving, k)) {
+        if (fits(pick) && (!best || sum(pick) < sum(best))) {
+          best = pick;
+        }
+      }
+      if (best) {
+        return best;
+      }
+    }
+  }
+  const stop = [];
+
+  while (!fits(stop)) {
+    const rest = moving.filter((v) => !stop.includes(v));
+    const left = (v) => place(rest.filter((x) => x !== v), free);
+
+    stop.push(rest.reduce((a, v) => {
+      const [ua, uv] = [left(a), left(v)];
+
+      return (uv.length - ua.length || sum(uv) - sum(ua) || v.memory - a.memory) < 0 ? v : a;
+    }));
+  }
+
+  return stop;
+}
+
 /**
  * For each node: the VMs that must move off it and whether they fit on the other nodes (witness and cordoned nodes excluded),
  * by memory requests (virt-launcher pod as the scheduler counts it) against free allocatable memory now. First-fit
  * decreasing; an approximation (CPU, affinity, devices and VMs moving between steps are not modelled).
- * `stay` = VMs that cannot live-migrate (shut down instead), by "ns/name".
+ * `stay` = VMs that cannot live-migrate (shut down instead), by "ns/name". `stop` = VMs to stop so the rest fit (see stopToFit).
  */
 export function moveLoad(nodes = [], pods = [], stay = new Set()) {
   const used = {};
@@ -112,20 +188,15 @@ export function moveLoad(nodes = [], pods = [], stay = new Set()) {
     const vms = pods.filter((p) => p.node === name && p.vm).map((p) => ({ vm: `${ p.namespace }/${ p.vm }`, memory: p.memory || 0 }));
     const moving = vms.filter((v) => !stay.has(v.vm)).sort((a, b) => b.memory - a.memory);
     const free = Object.fromEntries(targetsFor(name).map((t) => [t.metadata.name, (t.status.allocatableMemory || 0) - (used[t.metadata.name] || 0)]));
-    const unplaced = [];
-
-    moving.forEach((v) => {
-      const best = Object.entries(free).sort((a, b) => b[1] - a[1])[0];
-
-      if (best && best[1] >= v.memory) {
-        free[best[0]] -= v.memory;
-      } else {
-        unplaced.push(v);
-      }
-    });
+    const unplaced = place(moving, free);
 
     return [name, {
-      moving, staying: vms.filter((v) => stay.has(v.vm)), totalBytes: moving.reduce((a, v) => a + v.memory, 0), unplaced, targets: Object.keys(free)
+      moving,
+      staying:    vms.filter((v) => stay.has(v.vm)),
+      totalBytes: sum(moving),
+      unplaced,
+      stop:       unplaced.length ? stopToFit(moving, free) : [],
+      targets:    Object.keys(free)
     }];
   }));
 }

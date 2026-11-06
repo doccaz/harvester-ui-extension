@@ -56,4 +56,12 @@ describe('planView', () => {
     expect(w.find('.notes').text()).toContain('note.runsUntil');
     expect(w.find('.notes').text()).not.toContain('note.readAtStart');
   });
+
+  it('suggests which VMs to stop under each step that would stall', () => {
+    const hints = render(lab).findAll('.stop-hint');
+
+    expect(hints).toHaveLength(2);
+    expect(hints[0].text()).toContain('labs/downstream-02, labs/rancher-host-3, labs/sles16-01');
+    expect(hints[1].text()).toContain('labs/rancher-host-2, labs/rancher-lb');
+  });
 });

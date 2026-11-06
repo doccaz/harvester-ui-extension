@@ -353,6 +353,15 @@ const jobState = (j) => (j.failed ? 'failed' : (j.succeeded ? 'succeeded' : (j.a
               >
                 <b>{{ k('label.risk') }}</b> {{ k('vms.unplaced', { targets: load[e.node].targets.join(', ') || '—', vms: load[e.node].unplaced.map((v) => `${ v.vm } (${ gib(v.memory) } GiB)`).join(', ') }) }}
               </p>
+              <p
+                v-if="load[e.node].unplaced.length && load[e.node].stop?.length"
+                class="stop-hint"
+              >
+                {{ k('vms.stopToFit', { vms: load[e.node].stop.map((v) => v.vm).join(', '), gib: gib(load[e.node].stop.reduce((a, v) => a + v.memory, 0)) }) }}
+                <router-link :to="blockersLink">
+                  {{ k('vms.stopWhere') }}
+                </router-link>
+              </p>
             </template>
           </div>
         </li>
@@ -425,5 +434,6 @@ const jobState = (j) => (j.failed ? 'failed' : (j.succeeded ? 'succeeded' : (j.a
 .live-state { margin-right: 6px; border-color: var(--info); font-weight: 600; &.done { border-color: var(--success); } &.failed { border-color: var(--error); } &.paused { border-color: var(--warning); } }
 .copy { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; code { padding: 2px 6px; } }
 .problem { padding-left: 8px; border-left: 3px solid var(--error); &.warn { border-left-color: var(--warning); } }
+.stop-hint { padding-left: 11px; margin-top: -4px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 </style>
