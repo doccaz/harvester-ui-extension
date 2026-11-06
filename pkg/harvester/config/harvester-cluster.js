@@ -63,6 +63,7 @@ import { CONFIGURABLE_TABLES } from '@shell/store/features';
 import { tableViewsOffFeature } from '../utils/table-views';
 import { SETTING } from '@shell/config/settings';
 import { primeBrandUpdater } from '../utils/prime-brand';
+import { registerUpgradeReadiness } from '../upgrade-readiness/config/register';
 
 const TEMPLATE = HCI.VM_VERSION;
 const MONITORING_GROUP = 'Monitoring & Logging::Monitoring';
@@ -1565,4 +1566,6 @@ export function init($plugin, store) {
     ]
   });
   // ===========================================================================
+
+  registerUpgradeReadiness($plugin, store);
 }

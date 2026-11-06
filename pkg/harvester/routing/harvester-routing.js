@@ -19,6 +19,7 @@ import HarvesterUnsupported from '../pages/c/_cluster/unsupported/index.vue';
 import ForkliftDashboard from '../pages/c/_cluster/vm-migration/index.vue';
 import ForkliftVmMigrationWizard from '../pages/c/_cluster/vm-migration/vm-migration-wizard.vue';
 import ForkliftProviderWizard from '../pages/c/_cluster/vm-migration/provider-wizard.vue';
+import { upgradeReadinessRoutes } from '../upgrade-readiness/config/routes';
 
 const routes = [
   {
@@ -115,7 +116,7 @@ const routes = [
     path:      `/:product/c/:cluster/:resource/:namespace/:id`,
     component: ViewHarvesterNsResource,
   },
-
+  ...upgradeReadinessRoutes,
 ];
 
 export default routes;

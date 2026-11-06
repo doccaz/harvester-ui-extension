@@ -1214,6 +1214,211 @@ harvester:
       tip: Unmet system requirements and incorrectly performed procedures may cause complete upgrade failure and other issues that require manual workarounds.
       moreNotes: For more details about the release notes, please visit -
 
+
+  upgradeReadiness:
+    nav:
+      group: Upgrade Readiness
+      readiness: Can I Upgrade?
+      probe: API Probe
+    readiness:
+      title: Can I upgrade now?
+      subtitle: 'Every check the upgrade runs, at once. Read-only.'
+      updated: 'Checked at {time}'
+      checking: Checking...
+      recheck: Check again
+      blocked: '{n} problem(s) block the upgrade'
+      ready: 'Nothing blocks the upgrade'
+      also: '{warn} warning(s), {unknown} not checked'
+      passed: '{n} checks passed or skipped'
+      footnote: 'Same rules as the Harvester v1.8.2 upgrade. Certificate expiry is approximate (RKE2 serving certificate).'
+    status:
+      block: Blocks
+      warn: Warning
+      unknown: Not checked
+      skip: Skipped
+      pass: OK
+    why: Why does this matter?
+    unknown: 'Could not read {sources}; you may not have permission to see it.'
+    showMore: 'Show {n} more'
+    showLess: Show less
+    replica:
+      on: 'copy on {nodes}'
+      stuck: 'stuck replica on {nodes}'
+      unused: 'copy on {nodes}, never attached'
+      stuckHint: 'The extra replica on {node} never finished rebuilding (Longhorn gave up after {retries} tries). It is not a usable copy, and Longhorn keeps retrying it. Delete that replica (the healthy copy stays). To report it to Longhorn, take a support bundle first.'
+      openLonghorn: Open in Longhorn
+      detached: detached
+    drift:
+      fresh:
+        known: 'Fleet last tried at {last} ({outcome}); next try around {next}.'
+        overdue: 'Fleet last tried at {last} ({outcome}); the next try ({next}) is overdue.'
+        unknown: 'No recent Fleet attempt in the agent log (restarted or rotated).'
+      outcome:
+        failed: failed
+        deployed: deployed
+        running: in progress
+      type:
+        notOwned: Owned by something else
+        missing: Missing
+        extra: Extra
+        patch: Changed
+        notReady: Not ready
+      owner:
+        rke2Manifest: 'Created by the RKE2 manifest file {file} (Addon {addon}), not by the chart, so Fleet cannot update it.'
+        helm: 'Owned by Helm release {release}, not by this chart.'
+        fleet: 'Owned by another Fleet bundle.'
+        objectset: 'Owned by {owner}, not by the chart.'
+        unknown: 'Exists but is not owned by the chart; its owner is not recorded.'
+      explain:
+        missing: 'The chart wants to create it.'
+        extra: 'Fleet would delete it: it is no longer in the chart.'
+        immutable: 'That field cannot change in place: the object must be deleted so the chart can recreate it.'
+        maybePending: 'Fleet stopped at the error above, so this difference may just be pending; fix the error first.'
+      fleetSays: 'Fleet says:'
+      col:
+        field: Field
+        want: Chart wants
+        have: Cluster has
+        by: Last changed by
+      howToFix: How to fix
+      step:
+        findFile: 'Find the file (run on each control-plane node):'
+        parkFile: 'Move it out of the manifests folder (keep it):'
+        deleteAddon: 'Delete the RKE2 Addon that applied it:'
+        deleteObject: 'Delete the object so the chart can recreate it:'
+        retryNow: 'Make Fleet retry now (instead of waiting up to ~17 min):'
+        inspect: 'Look at it:'
+      risk:
+        deleteObject: 'It is gone until Fleet recreates it.'
+        kubeVip: 'kube-vip serves the cluster VIP: the VIP is down until Fleet recreates it, so run kubectl on a node, not through the VIP.'
+      stale: '{n} "not ready" entries are stale: ready now ({names}).'
+    fix:
+      goVolumes: Go to volumes
+      goSchedules: Go to schedules
+      goHosts: Go to hosts
+      goVms: Go to virtual machines
+      goCheckerEnabled: Upgrade checker on/off
+      goCheckerUrl: Upgrade checker URL
+      goDashboard: Go to dashboard
+      copyFleetRetry: 'Retry now:'
+      optionSkipDetached: 'Detached volumes: tick "Skip checking single-replica detached volumes" in the upgrade dialog.'
+    check:
+      upgradeRunning:
+        title: 'No other upgrade running'
+        problem: 'Another upgrade is running'
+        ok: 'No upgrade is in progress.'
+        why: 'Only one upgrade can run at a time.'
+        do: 'Wait for the running upgrade to finish (or fail) first.'
+      cleanupPending:
+        title: 'Previous upgrade cleaned up'
+        problem: 'Previous upgrade still cleaning up'
+        ok: 'No upgrade is waiting for cleanup.'
+        why: 'A previous upgrade has not finished its cleanup yet.'
+        do: 'Wait a few minutes and check again.'
+      versionAvailable:
+        title: 'Version to upgrade to available'
+        problem: 'No version to upgrade to'
+        ok: '{count} version(s) offered.'
+        why: 'You run {current} and no newer release is offered (upgrade checker: {checker}).'
+        do: 'Check the upgrade checker settings, or add the release you want; then use Upgrade on the dashboard.'
+      longhornDegraded:
+        title: 'No degraded volumes'
+        problem: 'Degraded volumes'
+        ok: 'No Longhorn volume is degraded.'
+        why: 'Degraded volumes are missing a copy; rebooting nodes during the upgrade could take the last copy offline.'
+        do: 'Wait for Longhorn to rebuild them, or fix what keeps them degraded, before upgrading.'
+        skip: 'Not checked by the upgrade on clusters with fewer than 3 nodes.'
+      clusterProvisioned:
+        title: 'Cluster provisioned'
+        problem: 'Cluster still provisioning'
+        ok: 'The local cluster is Provisioned.'
+        why: 'The local cluster is in phase {phase}, so node plans may still be changing.'
+        do: 'Wait for the cluster to finish provisioning.'
+      vmBackupsRunning:
+        title: 'No VM backup running'
+        problem: 'VM backups running'
+        ok: 'No VM backup is in progress.'
+        why: 'A running backup holds the volume and can block the live migrations the upgrade needs.'
+        do: 'Wait for these backups to finish.'
+      schedulesActive:
+        title: 'Backup and snapshot schedules suspended'
+        problem: 'Active backup or snapshot schedules'
+        ok: 'All schedules are suspended.'
+        why: 'An active schedule can start a backup in the middle of the upgrade and block live migrations.'
+        do: 'Suspend these schedules for the upgrade; resume them afterwards.'
+      managedCharts:
+        title: 'System charts ready'
+        problem: 'System charts not ready'
+        ok: 'All managed charts (harvester, CRDs, monitoring, logging) are ready.'
+        why: 'Fleet could not apply a system chart; the upgrade refuses to start with "managed chart is not ready". The message below is Fleets own.'
+        do: 'Fix what Fleet reports, then let Fleet retry (up to ~17 min) or retry now.'
+      addonsSettled:
+        title: 'Add-ons settled'
+        problem: 'Add-ons still changing'
+        ok: 'No add-on is being enabled or disabled.'
+        why: 'An add-on is still being enabled or disabled.'
+        do: 'Wait for it to finish, or fix the add-on.'
+      nodesReady:
+        title: 'Nodes ready and schedulable'
+        problem: 'Nodes not ready or not schedulable'
+        ok: 'All nodes are Ready and schedulable.'
+        why: 'Every node must be Ready and schedulable (not cordoned, not in maintenance mode).'
+        do: 'Bring the node back, uncordon it or take it out of maintenance mode.'
+      diskSpace:
+        title: 'Enough disk space for the new images'
+        problem: 'Not enough disk space for the new images'
+        ok: 'Every node stays under its image cleanup threshold with the new images (+13 GiB).'
+        why: 'The upgrade loads about 13 GiB of images; this node would go over the kubelet image cleanup threshold.'
+        do: 'Free space on that node (unused images, old upgrade images) before upgrading.'
+      machines:
+        title: 'Nodes match their machines'
+        problem: 'Nodes and machines do not match'
+        ok: 'Every node has a running machine and they match one to one.'
+        why: 'Nodes and their Rancher machines do not match, which points to a provisioning problem.'
+        do: 'Check the cluster provisioning in Rancher; there is no safe quick fix.'
+      singleReplica:
+        title: 'No single-copy volumes'
+        problem: 'Volumes with a single copy'
+        ok: 'No volume has a single replica.'
+        why: 'A volume with one replica goes offline when the node holding it reboots. {attached} are in use, {detached} detached.'
+        do: 'Stop these VMs for the upgrade, then start them again. Detached volumes can be skipped.'
+        skip: 'Not checked on a single-node cluster.'
+      nonMigratable:
+        title: 'All VMs can live-migrate'
+        problem: 'VMs that cannot live-migrate'
+        ok: 'Every running VM can live-migrate.'
+        why: 'The upgrade live-migrates VMs off each node; these cannot move (passthrough device, node selector or affinity).'
+        do: 'Shut these VMs down for the upgrade. Drain a VM first if it is a Kubernetes node.'
+        skip: 'Not checked: VMs are restored after the upgrade (restoreVM) or there is only one node to run them.'
+        reason:
+          device: 'Passthrough device ({devices}): it is tied to its host, so the VM cannot move'
+          nodeSelector: 'Pinned by a node selector ({selector})'
+          affinity: 'No other node matches its node affinity'
+      hotplug:
+        title: 'No stale hot-plugged volumes'
+        problem: 'Stale hot-plugged volumes'
+        ok: 'No VM has pending or ephemeral hot-plugged volumes.'
+        why: 'These hot-plug requests or temporary volumes are no longer handled after the upgrade and block the VM.'
+        do: 'Stop and start the VM, or make the volume part of the VM.'
+        skip: 'Not checked: VMs are restored after the upgrade (restoreVM) or there is only one node.'
+      certExpiry:
+        title: 'Certificates valid'
+        problem: 'Certificates about to expire'
+        ok: 'Certificates are valid until {date} ({days} days).'
+        why: 'Certificates expire on {date} ({days} days); the upgrade needs at least 7 days.'
+        do: 'Rotate the RKE2 certificates first.'
+    probe:
+      title: Upgrade readiness - API probe
+      subtitle: Checks that every read the upgrade pages need works with your session. It only reads; nothing is changed.
+      running: Running...
+      rerun: Run again
+      summary: '{ok} of {total} reads work.'
+      col:
+        result: Result
+        probe: Read
+        need: Needed for
+        detail: Detail
+
   schedule:
     label: Virtual Machine Schedules
     createTitle: Create Schedule

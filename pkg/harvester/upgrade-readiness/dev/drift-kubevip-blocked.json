@@ -1,0 +1,510 @@
+{
+ "managedCharts": [
+  {
+   "metadata": {
+    "name": "harvester",
+    "namespace": "fleet-local"
+   },
+   "status": {
+    "ready": {
+     "status": "False",
+     "message": "ErrApplied(1) [Cluster fleet-local/local: cannot patch \"kube-vip\" with kind DaemonSet: DaemonSet.apps \"kube-vip\" is invalid: spec.selector: Invalid value: {\"matchLabels\":{\"app.kubernetes.io/instance\":\"harvester\",\"app.kubernetes.io/name\":\"kube-vip\"}}: field is immutable]; daemonset.apps harvester-system/kube-vip is not owned by us; deployment.apps harvester-system/harvester [progressing] Available: 1/2; deployment.apps harvester-system/harvester-network-controller-manager [progressing] Deployment does not have minimum availability., Available: 1/2; deployment.apps harvester-system/harvester-webhook [progressing] Available: 1/2; kubevirt.kubevirt.io harvester-system/kubevirt modified {\"spec\":{\"workloadUpdateStrategy\":{\"workloadUpdateMethods\":[]}}}",
+     "lastUpdateTime": "2026-11-04T13:20:22Z"
+    }
+   }
+  },
+  {
+   "metadata": {
+    "name": "harvester-crd",
+    "namespace": "fleet-local"
+   },
+   "status": {
+    "ready": {
+     "status": "True",
+     "message": "",
+     "lastUpdateTime": "2025-12-13T23:21:32Z"
+    }
+   }
+  },
+  {
+   "metadata": {
+    "name": "kubeovn-operator-crd",
+    "namespace": "fleet-local"
+   },
+   "status": {
+    "ready": {
+     "status": "True",
+     "message": "",
+     "lastUpdateTime": "2025-12-13T23:21:31Z"
+    }
+   }
+  },
+  {
+   "metadata": {
+    "name": "rancher-logging-crd",
+    "namespace": "fleet-local"
+   },
+   "status": {
+    "ready": {
+     "status": "True",
+     "message": "",
+     "lastUpdateTime": "2026-01-03T20:30:29Z"
+    }
+   }
+  },
+  {
+   "metadata": {
+    "name": "rancher-monitoring-crd",
+    "namespace": "fleet-local"
+   },
+   "status": {
+    "ready": {
+     "status": "True",
+     "message": "",
+     "lastUpdateTime": "2026-01-03T20:30:17Z"
+    }
+   }
+  }
+ ],
+ "bundleDeployments": [
+  {
+   "metadata": {
+    "name": "fleet-agent-local",
+    "namespace": "cluster-fleet-local-local-1a3d67d0a899"
+   },
+   "status": {
+    "modifiedStatus": [],
+    "nonReadyStatus": [],
+    "conditions": [
+     {
+      "type": "Installed",
+      "status": "True",
+      "lastUpdateTime": "2026-10-26T01:01:19Z",
+      "message": ""
+     },
+     {
+      "type": "Deployed",
+      "status": "True",
+      "lastUpdateTime": "2026-10-26T01:01:19Z",
+      "message": ""
+     },
+     {
+      "type": "Ready",
+      "status": "True",
+      "lastUpdateTime": "2026-11-02T00:30:52Z",
+      "message": ""
+     },
+     {
+      "type": "Monitored",
+      "status": "True",
+      "lastUpdateTime": "2025-12-13T23:20:45Z",
+      "message": ""
+     }
+    ]
+   }
+  },
+  {
+   "metadata": {
+    "name": "mcc-harvester",
+    "namespace": "cluster-fleet-local-local-1a3d67d0a899"
+   },
+   "status": {
+    "modifiedStatus": [
+     {
+      "apiVersion": "apps/v1",
+      "exist": true,
+      "kind": "DaemonSet",
+      "missing": true,
+      "name": "kube-vip",
+      "namespace": "harvester-system"
+     },
+     {
+      "apiVersion": "kubevirt.io/v1",
+      "kind": "KubeVirt",
+      "name": "kubevirt",
+      "namespace": "harvester-system",
+      "patch": "{\"spec\":{\"workloadUpdateStrategy\":{\"workloadUpdateMethods\":[]}}}"
+     }
+    ],
+    "nonReadyStatus": [
+     {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "name": "harvester-network-controller-manager",
+      "namespace": "harvester-system",
+      "summary": {
+       "message": [
+        "Deployment does not have minimum availability.",
+        "Available: 1/2"
+       ],
+       "state": "updating",
+       "transitioning": true
+      },
+      "uid": "18cae3e3-0d8e-48d2-87ed-a172d8be87d7"
+     },
+     {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "name": "harvester",
+      "namespace": "harvester-system",
+      "summary": {
+       "message": [
+        "Available: 1/2"
+       ],
+       "state": "in-progress",
+       "transitioning": true
+      },
+      "uid": "4a3a991d-5b43-4186-8017-5e3efeb09df4"
+     },
+     {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "name": "harvester-webhook",
+      "namespace": "harvester-system",
+      "summary": {
+       "message": [
+        "Available: 1/2"
+       ],
+       "state": "in-progress",
+       "transitioning": true
+      },
+      "uid": "ec89947f-bd9a-44f0-98b1-29a5367f07e1"
+     }
+    ],
+    "conditions": [
+     {
+      "type": "Deployed",
+      "status": "False",
+      "lastUpdateTime": "2026-11-04T13:19:51Z",
+      "message": "cannot patch \"kube-vip\" with kind DaemonSet: DaemonSet.apps \"kube-vip\" is invalid: spec.selector: Invalid value: {\"matchLabels\":{\"app.kubernetes.io/instance\":\"harvester\",\"app.kubernetes.io/name\":\"kube-vip\"}}: field is immutable"
+     },
+     {
+      "type": "Installed",
+      "status": "True",
+      "lastUpdateTime": "2025-12-13T23:21:54Z",
+      "message": ""
+     },
+     {
+      "type": "Ready",
+      "status": "False",
+      "lastUpdateTime": "2026-09-23T15:14:28Z",
+      "message": "deployment.apps harvester-system/harvester-network-controller-manager [progressing] Deployment does not have minimum availability., Available: 1/2"
+     },
+     {
+      "type": "Monitored",
+      "status": "True",
+      "lastUpdateTime": "2026-04-30T04:29:08Z",
+      "message": ""
+     }
+    ]
+   }
+  },
+  {
+   "metadata": {
+    "name": "mcc-harvester-crd",
+    "namespace": "cluster-fleet-local-local-1a3d67d0a899"
+   },
+   "status": {
+    "modifiedStatus": [],
+    "nonReadyStatus": [],
+    "conditions": [
+     {
+      "type": "Installed",
+      "status": "True",
+      "lastUpdateTime": "2025-12-13T23:21:32Z",
+      "message": ""
+     },
+     {
+      "type": "Deployed",
+      "status": "True",
+      "lastUpdateTime": "2025-12-13T23:21:32Z",
+      "message": ""
+     },
+     {
+      "type": "Ready",
+      "status": "True",
+      "lastUpdateTime": "2025-12-13T23:21:32Z",
+      "message": ""
+     },
+     {
+      "type": "Monitored",
+      "status": "True",
+      "lastUpdateTime": "2025-12-13T23:21:32Z",
+      "message": ""
+     }
+    ]
+   }
+  },
+  {
+   "metadata": {
+    "name": "mcc-kubeovn-operator-crd",
+    "namespace": "cluster-fleet-local-local-1a3d67d0a899"
+   },
+   "status": {
+    "modifiedStatus": [],
+    "nonReadyStatus": [],
+    "conditions": [
+     {
+      "type": "Installed",
+      "status": "True",
+      "lastUpdateTime": "2025-12-13T23:21:31Z",
+      "message": ""
+     },
+     {
+      "type": "Deployed",
+      "status": "True",
+      "lastUpdateTime": "2025-12-13T23:21:31Z",
+      "message": ""
+     },
+     {
+      "type": "Ready",
+      "status": "True",
+      "lastUpdateTime": "2025-12-13T23:21:31Z",
+      "message": ""
+     },
+     {
+      "type": "Monitored",
+      "status": "True",
+      "lastUpdateTime": "2025-12-13T23:21:31Z",
+      "message": ""
+     }
+    ]
+   }
+  },
+  {
+   "metadata": {
+    "name": "mcc-rancher-logging-crd",
+    "namespace": "cluster-fleet-local-local-1a3d67d0a899"
+   },
+   "status": {
+    "modifiedStatus": [],
+    "nonReadyStatus": [],
+    "conditions": [
+     {
+      "type": "Installed",
+      "status": "True",
+      "lastUpdateTime": "2025-12-13T23:21:34Z",
+      "message": ""
+     },
+     {
+      "type": "Deployed",
+      "status": "True",
+      "lastUpdateTime": "2026-04-30T04:29:08Z",
+      "message": ""
+     },
+     {
+      "type": "Ready",
+      "status": "True",
+      "lastUpdateTime": "2025-12-13T23:21:35Z",
+      "message": ""
+     },
+     {
+      "type": "Monitored",
+      "status": "True",
+      "lastUpdateTime": "2025-12-13T23:21:35Z",
+      "message": ""
+     }
+    ]
+   }
+  },
+  {
+   "metadata": {
+    "name": "mcc-rancher-monitoring-crd",
+    "namespace": "cluster-fleet-local-local-1a3d67d0a899"
+   },
+   "status": {
+    "modifiedStatus": [],
+    "nonReadyStatus": [],
+    "conditions": [
+     {
+      "type": "Installed",
+      "status": "True",
+      "lastUpdateTime": "2025-12-13T23:21:35Z",
+      "message": ""
+     },
+     {
+      "type": "Deployed",
+      "status": "True",
+      "lastUpdateTime": "2026-01-03T20:30:17Z",
+      "message": ""
+     },
+     {
+      "type": "Ready",
+      "status": "True",
+      "lastUpdateTime": "2025-12-13T23:21:35Z",
+      "message": ""
+     },
+     {
+      "type": "Monitored",
+      "status": "True",
+      "lastUpdateTime": "2025-12-13T23:21:35Z",
+      "message": ""
+     }
+    ]
+   }
+  }
+ ],
+ "k3sAddons": [
+  {
+   "metadata": {
+    "name": "addons",
+    "namespace": "kube-system"
+   },
+   "spec": {
+    "source": "/var/lib/rancher/rke2/server/manifests/rancher/addons.yaml"
+   }
+  },
+  {
+   "metadata": {
+    "name": "cluster-agent",
+    "namespace": "kube-system"
+   },
+   "spec": {
+    "source": "/var/lib/rancher/rke2/server/manifests/rancher/cluster-agent.yaml"
+   }
+  },
+  {
+   "metadata": {
+    "name": "kube-vip",
+    "namespace": "kube-system"
+   },
+   "spec": {
+    "source": "/var/lib/rancher/rke2/server/manifests/kube-vip.yaml"
+   }
+  },
+  {
+   "metadata": {
+    "name": "managed-chart-config",
+    "namespace": "kube-system"
+   },
+   "spec": {
+    "source": "/var/lib/rancher/rke2/server/manifests/rancher/managed-chart-config.yaml"
+   }
+  },
+  {
+   "metadata": {
+    "name": "rke2-canal",
+    "namespace": "kube-system"
+   },
+   "spec": {
+    "source": "/var/lib/rancher/rke2/server/manifests/rke2-canal.yaml"
+   }
+  },
+  {
+   "metadata": {
+    "name": "rke2-coredns",
+    "namespace": "kube-system"
+   },
+   "spec": {
+    "source": "/var/lib/rancher/rke2/server/manifests/rke2-coredns.yaml"
+   }
+  },
+  {
+   "metadata": {
+    "name": "rke2-etcd-snapshot-extra-metadata",
+    "namespace": "kube-system"
+   },
+   "spec": {
+    "source": "/var/lib/rancher/rke2/server/manifests/rancher/rke2-etcd-snapshot-extra-metadata.yaml"
+   }
+  },
+  {
+   "metadata": {
+    "name": "rke2-ingress-nginx",
+    "namespace": "kube-system"
+   },
+   "spec": {
+    "source": "/var/lib/rancher/rke2/server/manifests/rke2-ingress-nginx.yaml"
+   }
+  },
+  {
+   "metadata": {
+    "name": "rke2-metrics-server",
+    "namespace": "kube-system"
+   },
+   "spec": {
+    "source": "/var/lib/rancher/rke2/server/manifests/rke2-metrics-server.yaml"
+   }
+  },
+  {
+   "metadata": {
+    "name": "rke2-multus",
+    "namespace": "kube-system"
+   },
+   "spec": {
+    "source": "/var/lib/rancher/rke2/server/manifests/rke2-multus.yaml"
+   }
+  },
+  {
+   "metadata": {
+    "name": "rke2-runtimeclasses",
+    "namespace": "kube-system"
+   },
+   "spec": {
+    "source": "/var/lib/rancher/rke2/server/manifests/rke2-runtimeclasses.yaml"
+   }
+  }
+ ],
+ "live": {
+  "DaemonSet/harvester-system/kube-vip": {
+   "exists": true,
+   "owner": {
+    "type": "rke2Manifest",
+    "addon": "kube-vip",
+    "addonNamespace": "kube-system"
+   },
+   "ready": true,
+   "fields": []
+  },
+  "Deployment/harvester-system/harvester-network-controller-manager": {
+   "exists": true,
+   "owner": {
+    "type": "helm",
+    "release": "harvester",
+    "releaseNamespace": "harvester-system"
+   },
+   "ready": true,
+   "fields": []
+  },
+  "Deployment/harvester-system/harvester-webhook": {
+   "exists": true,
+   "owner": {
+    "type": "helm",
+    "release": "harvester",
+    "releaseNamespace": "harvester-system"
+   },
+   "ready": true,
+   "fields": []
+  },
+  "Deployment/harvester-system/harvester": {
+   "exists": true,
+   "owner": {
+    "type": "helm",
+    "release": "harvester",
+    "releaseNamespace": "harvester-system"
+   },
+   "ready": true,
+   "fields": []
+  },
+  "KubeVirt/harvester-system/kubevirt": {
+   "exists": true,
+   "owner": {
+    "type": "helm",
+    "release": "harvester",
+    "releaseNamespace": "harvester-system"
+   },
+   "ready": null,
+   "fields": [
+    {
+     "path": "spec.workloadUpdateStrategy.workloadUpdateMethods",
+     "have": [
+      "LiveMigrate"
+     ],
+     "managers": []
+    }
+   ]
+  }
+ },
+ "fleetLog": "",
+ "now": 1793982463000
+}
