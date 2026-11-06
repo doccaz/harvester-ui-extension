@@ -53,11 +53,16 @@ export const TRIM = {
       ...meta(u, { labels: true, created: true }),
       annotations: Object.fromEntries(Object.entries(u?.metadata?.annotations || {}).filter(([k]) => k.startsWith('harvesterhci.io/')))
     },
-    spec:     { version: u?.spec?.version || '', image: u?.spec?.image || '' },
+    spec:     {
+      version: u?.spec?.version || '', image: u?.spec?.image || '', logEnabled: !!u?.spec?.logEnabled
+    },
     status:   {
       previousVersion: u?.status?.previousVersion || '',
       repoInfo:        u?.status?.repoInfo || '',
-      conditions:      (u?.status?.conditions || []).map((c) => ({ type: c.type, status: c.status })),
+      conditions:      (u?.status?.conditions || []).map((c) => ({
+        type: c.type, status: c.status, reason: c.reason || '', message: c.message || ''
+      })),
+      singleNode:      u?.status?.singleNode || '',
       nodeStatuses:    u?.status?.nodeStatuses || {}
     }
   })),
@@ -136,6 +141,10 @@ export const TRIM = {
     node:      p.spec.nodeName,
     memory:    podMemoryRequest(p),
     vm:        p.metadata.labels?.['kubevirt.io'] === 'virt-launcher' ? p.metadata.labels?.['vm.kubevirt.io/name'] || null : null
+  })),
+  // Only Harvester release ISOs (upgrade sources); other images are not needed.
+  images: (r) => list(r).filter((i) => /^harvester-v.*\.iso$/i.test(i?.spec?.displayName || '')).map((i) => ({
+    metadata: meta(i), spec: { displayName: i.spec.displayName }, status: { progress: i?.status?.progress ?? null }
   })),
   k3sAddons: (r) => list(r).map((a) => ({ metadata: meta(a), spec: { source: a?.spec?.source || '' } })),
   vms:       (r) => list(r).map((v) => ({

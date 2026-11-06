@@ -9,10 +9,13 @@ const route = (suffix) => `${ HARVESTER_PRODUCT }-c-cluster-upgrade-readiness${ 
 // Sibling paths on purpose (see the descheduler pages: a path prefix of another marks both menu items active).
 export const PAGES = {
   readiness: {
-    type: 'upgrade-readiness-check', path: 'upgrade-readiness/check', route: route('-check'), weight: 3, labelKey: 'harvester.upgradeReadiness.nav.readiness'
+    type: 'upgrade-readiness-blockers', path: 'upgrade-readiness/blockers', route: route('-blockers'), weight: 4, labelKey: 'harvester.upgradeReadiness.nav.readiness'
   },
   plan: {
-    type: 'upgrade-readiness-plan', path: 'upgrade-readiness/plan', route: route('-plan'), weight: 2, labelKey: 'harvester.upgradeReadiness.nav.plan'
+    type: 'upgrade-readiness-plan', path: 'upgrade-readiness/plan', route: route('-plan'), weight: 3, labelKey: 'harvester.upgradeReadiness.nav.plan'
+  },
+  history: {
+    type: 'upgrade-readiness-history', path: 'upgrade-readiness/history', route: route('-history'), weight: 2, labelKey: 'harvester.upgradeReadiness.nav.history'
   },
   probe: {
     type: 'upgrade-readiness-probe', path: 'upgrade-readiness/probe', route: route('-probe'), weight: 1, labelKey: 'harvester.upgradeReadiness.nav.probe'

@@ -1,4 +1,6 @@
+import { markRaw } from 'vue';
 import { GROUP, HARVESTER_PRODUCT, NAV_GROUP, PAGES } from './names';
+import { blockerCountGetter } from '../utils/blockerCount';
 
 /**
  * Adds Advanced > Upgrade readiness to the Harvester side menu. Takes `$plugin` and `store` and builds its own DSL,
@@ -6,7 +8,7 @@ import { GROUP, HARVESTER_PRODUCT, NAV_GROUP, PAGES } from './names';
  */
 export function registerUpgradeReadiness($plugin, store) {
   const {
-    virtualType, basicType, labelGroup, setGroupDefaultType, weightGroup
+    virtualType, basicType, labelGroup, setGroupDefaultType, weightGroup, configureType
   } = $plugin.DSL(store, HARVESTER_PRODUCT);
 
   // Keep Advanced last (a nested group would otherwise create its parent with weight 0, see the descheduler pages).
@@ -24,4 +26,6 @@ export function registerUpgradeReadiness($plugin, store) {
   labelGroup(GROUP, undefined, 'harvester.upgradeReadiness.nav.group');
   basicType(Object.values(PAGES).map((p) => p.type), `${ NAV_GROUP }::${ GROUP }`);
   setGroupDefaultType(GROUP, PAGES.readiness.type);
+  // Blocker count next to "Blockers" in the menu (same mechanism Rancher uses for its cluster count).
+  configureType(PAGES.readiness.type, { custom: { countGetter: markRaw(blockerCountGetter(store)) } });
 }

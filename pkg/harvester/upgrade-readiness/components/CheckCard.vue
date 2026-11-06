@@ -5,7 +5,7 @@ import { RcSection, RcSectionBadges } from '@components/RcSection';
 import CopyToClipboard from '@shell/components/CopyToClipboard';
 import ChartDrift from './ChartDrift.vue';
 import { useTranslation } from '../utils/i18n';
-import { HARVESTER_PRODUCT } from '../config/names';
+import { location } from '../utils/links';
 
 // One pre-flight finding. Collapsed: title, count, status. Open: the objects, what to do, fixes; the "why" sits behind
 // a native <details> so the page stays short. Read-only: buttons only navigate or copy a command.
@@ -24,28 +24,7 @@ const STATUS = {
 };
 const badges = computed(() => [{ label: t(`harvester.upgradeReadiness.status.${ props.check.status }`), status: STATUS[props.check.status] }]);
 
-/** Router location of a Harvester resource list or detail page. */
-function to(target) {
-  const params = {
-    product: HARVESTER_PRODUCT, cluster: route.params.cluster || 'local', resource: target.resource
-  };
-
-  if (target.id && target.namespace) {
-    return {
-      name:   `${ HARVESTER_PRODUCT }-c-cluster-resource-namespace-id`,
-      params: {
-        ...params, namespace: target.namespace, id: target.id
-      }
-    };
-  }
-  if (target.id) {
-    return {
-      name: `${ HARVESTER_PRODUCT }-c-cluster-resource-id`, params: { ...params, id: target.id }, query: target.query || {}
-    };
-  }
-
-  return { name: `${ HARVESTER_PRODUCT }-c-cluster-resource`, params };
-}
+const to = (target) => location(target, route.params.cluster || 'local');
 
 const showStuck = (item) => !!item.stuckReplicas?.length && !!item.volume;
 const deleteReplica = (sr) => `kubectl -n longhorn-system delete replicas.longhorn.io ${ sr.name }`;
@@ -197,7 +176,7 @@ function details(item) {
           v-if="check.status === 'pass'"
           class="text-muted"
         >
-          {{ t(k('ok'), check.args) }}
+          {{ t(k(check.okKey || 'ok'), check.args) }}
         </p>
         <p
           v-else
@@ -239,6 +218,20 @@ function details(item) {
               {{ t(`harvester.upgradeReadiness.fix.${ f.labelKey }`) }}
             </p>
           </template>
+        </div>
+
+        <div
+          v-if="check.extraFixes?.length"
+          class="fixes"
+        >
+          <router-link
+            v-for="(f, i) in check.extraFixes"
+            :key="i"
+            class="btn btn-sm role-secondary"
+            :to="to(f.to)"
+          >
+            {{ t(`harvester.upgradeReadiness.fix.${ f.labelKey }`) }}
+          </router-link>
         </div>
 
         <details

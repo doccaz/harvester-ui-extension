@@ -1,6 +1,6 @@
 {
  "errors": {},
- "loadedAt": "2026-11-06T17:35:26.137Z",
+ "loadedAt": "2026-11-06T18:13:16.928Z",
  "nodes": [
   {
    "metadata": {
@@ -977,7 +977,8 @@
    },
    "spec": {
     "version": "",
-    "image": "harvester-system/image-blx7c"
+    "image": "harvester-system/image-blx7c",
+    "logEnabled": true
    },
    "status": {
     "previousVersion": "v1.8.0",
@@ -985,33 +986,48 @@
     "conditions": [
      {
       "type": "Completed",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "LogReady",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "ImageReady",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "RepoReady",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "NodesPrepared",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "SystemServicesUpgraded",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "NodesUpgraded",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      }
     ],
+    "singleNode": "",
     "nodeStatuses": {
      "harv01lab": {
       "state": "Succeeded"
@@ -1046,7 +1062,8 @@
    },
    "spec": {
     "version": "",
-    "image": "harvester-system/image-rm46s"
+    "image": "harvester-system/image-rm46s",
+    "logEnabled": true
    },
    "status": {
     "previousVersion": "v1.7.1",
@@ -1054,33 +1071,48 @@
     "conditions": [
      {
       "type": "Completed",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "LogReady",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "ImageReady",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "RepoReady",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "NodesPrepared",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "SystemServicesUpgraded",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "NodesUpgraded",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      }
     ],
+    "singleNode": "",
     "nodeStatuses": {
      "harv01lab": {
       "state": "Succeeded"
@@ -1108,7 +1140,8 @@
    },
    "spec": {
     "version": "",
-    "image": "harvester-system/image-t9npf"
+    "image": "harvester-system/image-t9npf",
+    "logEnabled": true
    },
    "status": {
     "previousVersion": "v1.7.0-rc6",
@@ -1116,33 +1149,48 @@
     "conditions": [
      {
       "type": "Completed",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "LogReady",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "ImageReady",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "RepoReady",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "NodesPrepared",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "SystemServicesUpgraded",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "NodesUpgraded",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      }
     ],
+    "singleNode": "harv01lab",
     "nodeStatuses": {
      "harv01lab": {
       "state": "Succeeded"
@@ -1167,7 +1215,8 @@
    },
    "spec": {
     "version": "",
-    "image": "harvester-system/image-v5k96"
+    "image": "harvester-system/image-v5k96",
+    "logEnabled": true
    },
    "status": {
     "previousVersion": "v1.7.0",
@@ -1175,33 +1224,48 @@
     "conditions": [
      {
       "type": "Completed",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "LogReady",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "ImageReady",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "RepoReady",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "NodesPrepared",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "SystemServicesUpgraded",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "NodesUpgraded",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      }
     ],
+    "singleNode": "harv01lab",
     "nodeStatuses": {
      "harv01lab": {
       "state": "Succeeded"
@@ -1231,7 +1295,8 @@
    },
    "spec": {
     "version": "v1.8.2",
-    "image": ""
+    "image": "",
+    "logEnabled": true
    },
    "status": {
     "previousVersion": "v1.8.1",
@@ -1239,33 +1304,48 @@
     "conditions": [
      {
       "type": "Completed",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "LogReady",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "ImageReady",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "RepoReady",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "NodesPrepared",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "SystemServicesUpgraded",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      },
      {
       "type": "NodesUpgraded",
-      "status": "True"
+      "status": "True",
+      "reason": "",
+      "message": ""
      }
     ],
+    "singleNode": "",
     "nodeStatuses": {
      "harv01lab": {
       "state": "Succeeded"
@@ -5666,6 +5746,68 @@
    }
   }
  ],
+ "images": [
+  {
+   "metadata": {
+    "name": "image-4kr25",
+    "namespace": "harvester-system"
+   },
+   "spec": {
+    "displayName": "harvester-v1.8.0-amd64.iso"
+   },
+   "status": {
+    "progress": null
+   }
+  },
+  {
+   "metadata": {
+    "name": "image-blx7c",
+    "namespace": "harvester-system"
+   },
+   "spec": {
+    "displayName": "harvester-v1.8.1-amd64.iso"
+   },
+   "status": {
+    "progress": 100
+   }
+  },
+  {
+   "metadata": {
+    "name": "image-fmk9h",
+    "namespace": "harvester-system"
+   },
+   "spec": {
+    "displayName": "harvester-v1.9.0-amd64.iso"
+   },
+   "status": {
+    "progress": 100
+   }
+  },
+  {
+   "metadata": {
+    "name": "image-s9twj",
+    "namespace": "harvester-system"
+   },
+   "spec": {
+    "displayName": "harvester-v1.8.1-amd64.iso"
+   },
+   "status": {
+    "progress": 100
+   }
+  },
+  {
+   "metadata": {
+    "name": "image-srhln",
+    "namespace": "harvester-system"
+   },
+   "spec": {
+    "displayName": "harvester-v1.8.1-amd64.iso"
+   },
+   "status": {
+    "progress": null
+   }
+  }
+ ],
  "planSecrets": [
   {
    "metadata": {
@@ -6974,21 +7116,21 @@
  ],
  "kubelet": {
   "harv01lab": {
-   "usedBytes": 134187458560,
+   "usedBytes": 134214524928,
    "capacityBytes": 368766496768,
    "gcHigh": 85
   },
   "harv02lab": {
-   "usedBytes": 148575334400,
+   "usedBytes": 148589244416,
    "capacityBytes": 210241560576,
    "gcHigh": 85
   },
   "harvlab-witness": {
-   "usedBytes": 33222778880,
+   "usedBytes": 33228427264,
    "capacityBytes": 712803852288,
    "gcHigh": 85
   }
  },
  "certNotAfter": "2027-04-30T19:15:43.000Z",
- "now": 1793986526137
+ "now": 1793988796928
 }

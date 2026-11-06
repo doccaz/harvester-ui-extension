@@ -1,38 +1,31 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { useStore } from 'vuex';
+import { useRoute } from 'vue-router';
+import { location } from '../utils/links';
 import { Banner } from '@components/Banner';
 import { RcSection } from '@components/RcSection';
 import CheckCard from '../components/CheckCard.vue';
 import { clusterRequest } from '../utils/cluster';
-import { loadSnapshot, SERVING_CERT_ID } from '../utils/snapshot';
+import { loadSnapshot } from '../utils/snapshot';
+import { certFromStore, setBlockerCount } from '../utils/blockerCount';
 import { runChecks, verdict } from '../utils/checks';
 import { useTranslation } from '../utils/i18n';
 
-// "Can I upgrade now?": every check of Harvester's upgrade webhook, all at once. Read-only (GETs only).
+// "Upgrade blockers": every check of Harvester's upgrade webhook, all at once. Read-only (GETs only).
 const t = useTranslation();
 const store = useStore();
+const route = useRoute();
 const results = ref([]);
 const loading = ref(false);
 const loadedAt = ref(null);
 const passedOpen = ref(false);
 
-const storeName = () => store.getters['currentProduct']?.inStore || 'harvester';
-
-/** Expiry of the RKE2 serving cert, parsed by the shell's own Secret model (jsrsasign). */
-async function certNotAfter() {
-  const secret = await store.dispatch(`${ storeName() }/find`, {
-    type: 'secret', id: SERVING_CERT_ID, opt: { force: true }
-  });
-  const d = secret?.notAfter;
-
-  return d ? new Date(d).toISOString() : null;
-}
-
 async function refresh() {
   loading.value = true;
   try {
-    results.value = runChecks(await loadSnapshot(clusterRequest(store), certNotAfter));
+    results.value = runChecks(await loadSnapshot(clusterRequest(store), certFromStore(store)));
+    setBlockerCount(results.value);
     loadedAt.value = new Date();
   } finally {
     loading.value = false;
@@ -119,8 +112,15 @@ onMounted(refresh);
           />
           <span>{{ t(`harvester.upgradeReadiness.check.${ c.id }.title`) }}</span>
           <span class="text-muted">
-            {{ c.status === 'pass' ? t(`harvester.upgradeReadiness.check.${ c.id }.ok`, c.args) : t(`harvester.upgradeReadiness.check.${ c.id }.skip`, c.args) }}
+            {{ c.status === 'pass' ? t(`harvester.upgradeReadiness.check.${ c.id }.${ c.okKey || 'ok' }`, c.args) : t(`harvester.upgradeReadiness.check.${ c.id }.skip`, c.args) }}
           </span>
+          <router-link
+            v-for="(f, i) in (c.extraFixes || [])"
+            :key="i"
+            :to="location(f.to, route.params.cluster || 'local')"
+          >
+            {{ t(`harvester.upgradeReadiness.fix.${ f.labelKey }`) }}
+          </router-link>
         </li>
       </ul>
     </RcSection>

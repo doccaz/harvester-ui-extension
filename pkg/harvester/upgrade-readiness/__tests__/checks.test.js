@@ -1,6 +1,6 @@
 import lab from './fixtures/lab-2026-11-06.json';
 import {
-  deviceName, matchesTerms, pvcToVm, runChecks, verdict
+  compareVersions, deviceName, isoVersion, matchesTerms, pvcToVm, runChecks, verdict
 } from '../utils/checks';
 
 const clone = (o) => JSON.parse(JSON.stringify(o));
@@ -11,11 +11,10 @@ describe('pre-flight checks on the lab snapshot (2026-11-06, after the kube-vip 
 
   it('matches hack/preflight.py: single-replica and GPU VM block, the rest passes', () => {
     expect(verdict(Object.values(r))).toStrictEqual({
-      block: 2, warn: 1, unknown: 0, pass: 13, skip: 0
+      block: 2, warn: 0, unknown: 0, pass: 14, skip: 0
     });
     expect(r.singleReplica.status).toBe('block');
     expect(r.nonMigratable.status).toBe('block');
-    expect(r.versionAvailable.status).toBe('warn');
     expect(r.managedCharts.status).toBe('pass');
   });
 
@@ -45,11 +44,24 @@ describe('pre-flight checks on the lab snapshot (2026-11-06, after the kube-vip 
     expect(cor.unusedReplicaNodes).toStrictEqual(['harv02lab']);
   });
 
-  it('says which version runs and offers settings and dashboard when nothing is offered', () => {
-    expect(r.versionAvailable.args).toStrictEqual({
-      count: 0, current: 'v1.8.2', checker: 'on'
+  it('finds the uploaded v1.9.0 ISO as the upgrade source and links to the image upgrade page', () => {
+    expect(r.versionAvailable.status).toBe('pass');
+    expect(r.versionAvailable.okKey).toBe('okIso');
+    expect(r.versionAvailable.args).toMatchObject({ current: 'v1.8.2', iso: 'harvester-v1.9.0-amd64.iso' });
+    expect(r.versionAvailable.extraFixes[0].to).toStrictEqual({ routeName: 'airgapupgrade' });
+  });
+
+  it('without a Version or a newer ISO, warns and offers the checker settings and the dashboard', () => {
+    const s = clone(lab);
+
+    s.images = s.images.filter((i) => !i.spec.displayName.includes('v1.9'));
+    const v = byId(runChecks(s)).versionAvailable;
+
+    expect(v.status).toBe('warn');
+    expect(v.args).toStrictEqual({
+      count: 0, current: 'v1.8.2', checker: 'on', iso: ''
     });
-    expect(r.versionAvailable.fixes.map((f) => f.to.id || f.to.resource)).toStrictEqual(['upgrade-checker-enabled', 'upgrade-checker-url', 'harvesterhci.io.dashboard']);
+    expect(v.fixes.map((f) => f.to.id || f.to.resource)).toStrictEqual(['upgrade-checker-enabled', 'upgrade-checker-url', 'harvesterhci.io.dashboard']);
   });
 
   it('explains why gpu-node cannot migrate', () => {
@@ -155,6 +167,16 @@ describe('helpers', () => {
     const vm = { metadata: { namespace: 'a', name: 'vm1' }, spec: { volumes: [{ name: 'd', claim: 'pvc1' }] } };
 
     expect(pvcToVm([vm])['a/pvc1']).toBe(vm);
+  });
+
+  it('reads and compares Harvester versions', () => {
+    expect(isoVersion('harvester-v1.9.0-amd64.iso')).toBe('v1.9.0');
+    expect(isoVersion('harvester-v1.9.0-rc2-amd64.iso')).toBe('v1.9.0-rc2');
+    expect(isoVersion('ubuntu.iso')).toBeNull();
+    expect(compareVersions('v1.9.0', 'v1.8.2')).toBeGreaterThan(0);
+    expect(compareVersions('v1.8.1', 'v1.8.2')).toBeLessThan(0);
+    expect(compareVersions('v1.9.0-rc1', 'v1.9.0')).toBeLessThan(0);
+    expect(compareVersions('v1.10.0', 'v1.9.0')).toBeGreaterThan(0);
   });
 
   it('makes device plugin names readable', () => {

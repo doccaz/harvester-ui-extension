@@ -18,7 +18,8 @@ export const SOURCES = {
   lhVolumes:         `${ K8S }/apis/longhorn.io/v1beta2/namespaces/longhorn-system/volumes`,
   lhReplicas:        `${ K8S }/apis/longhorn.io/v1beta2/namespaces/longhorn-system/replicas`,
   vmis:              `${ K8S }/apis/kubevirt.io/v1/virtualmachineinstances`,
-  vms:               `${ K8S }/apis/kubevirt.io/v1/virtualmachines`
+  vms:               `${ K8S }/apis/kubevirt.io/v1/virtualmachines`,
+  images:            `${ K8S }/apis/harvesterhci.io/v1beta1/virtualmachineimages`
 };
 
 /** Read only by the plan page (heavier: every pod). Plan secrets are requested as metadata only (they hold join tokens). */

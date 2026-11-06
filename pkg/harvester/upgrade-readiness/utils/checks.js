@@ -93,14 +93,21 @@ const CHECKS = {
 
   versionAvailable: (s) => guarded('versionAvailable', s, ['versions'], () => {
     const setting = (x) => (x ? (x.value || x.default) : '');
+    const current = setting(s.serverVersion) || '';
     const checker = s.checkerEnabled ? setting(s.checkerEnabled) !== 'false' : null;
+    // An uploaded Harvester ISO newer than the running version is an upgrade source too (the "upgrade from image" page).
+    const isos = (s.images || []).map((i) => ({ image: i, version: isoVersion(i.spec.displayName) }))
+      .filter((x) => x.version && compareVersions(x.version, current) > 0 && (x.image.status.progress === null || x.image.status.progress >= 100))
+      .sort((a, b) => compareVersions(b.version, a.version));
+    const ready = s.versions.length > 0 || isos.length > 0;
 
-    return result('versionAvailable', s.versions.length ? 'pass' : 'warn', {
+    return result('versionAvailable', ready ? 'pass' : 'warn', {
       items: s.versions.map((v) => ({ text: v.metadata.name })),
       args:  {
-        count: s.versions.length, current: setting(s.serverVersion) || '?', checker: checker === null ? 'unknown' : (checker ? 'on' : 'off')
+        count: s.versions.length, current: current || '?', checker: checker === null ? 'unknown' : (checker ? 'on' : 'off'), iso: isos.map((x) => x.image.spec.displayName).join(', ')
       },
-      fixes: s.versions.length ? [] : [
+      okKey: !s.versions.length && isos.length ? 'okIso' : 'ok',
+      fixes: ready ? [] : [
         // Each setting's own edit form (the Settings list has no anchors); the user still has to press Save.
         goto('goCheckerEnabled', {
           resource: TYPES.SETTING, id: 'upgrade-checker-enabled', query: { mode: 'edit' }
@@ -109,7 +116,11 @@ const CHECKS = {
           resource: TYPES.SETTING, id: 'upgrade-checker-url', query: { mode: 'edit' }
         }),
         goto('goDashboard', { resource: TYPES.DASHBOARD })
-      ]
+      ],
+      // Shown even when passing: the way to start an upgrade from the uploaded ISO.
+      extraFixes: isos.length ? [{
+        kind: 'goto', labelKey: 'goAirgapUpgrade', to: { routeName: 'airgapupgrade' }
+      }] : []
     });
   }),
 
@@ -353,6 +364,41 @@ const CHECKS = {
 /** `nvidia.com/GB205_GEFORCE_RTX_5070` -> `GB205 GEFORCE RTX 5070` (the device plugin's resource name, readable). */
 export function deviceName(resource) {
   return String(resource || '').split('/').pop().replace(/_/g, ' ');
+}
+
+/** `harvester-v1.9.0-amd64.iso` -> `v1.9.0` */
+export function isoVersion(name) {
+  const base = String(name || '').replace(/-(amd64|arm64|x86_64|aarch64)\.iso$/i, '').replace(/\.iso$/i, '');
+
+  return base.match(/^harvester-(v\d+\.\d+\.\d+(?:-[0-9a-z.]+)?)$/i)?.[1] || null;
+}
+
+/** Compares `v1.9.0`, `v1.8.2`, `v1.9.0-rc1` (a pre-release sorts before its release). */
+export function compareVersions(a, b) {
+  const parse = (v) => {
+    const [core, pre] = String(v || '').replace(/^v/, '').split('-');
+
+    return { nums: core.split('.').map((x) => Number(x) || 0), pre: pre || null };
+  };
+  const x = parse(a);
+  const y = parse(b);
+
+  for (let i = 0; i < 3; i++) {
+    if ((x.nums[i] || 0) !== (y.nums[i] || 0)) {
+      return (x.nums[i] || 0) - (y.nums[i] || 0);
+    }
+  }
+  if (x.pre === y.pre) {
+    return 0;
+  }
+  if (!x.pre) {
+    return 1;
+  }
+  if (!y.pre) {
+    return -1;
+  }
+
+  return x.pre.localeCompare(y.pre, undefined, { numeric: true });
 }
 
 function restoreVM(s) {

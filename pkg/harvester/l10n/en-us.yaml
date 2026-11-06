@@ -1218,11 +1218,12 @@ harvester:
   upgradeReadiness:
     nav:
       group: Upgrade Readiness
-      readiness: Can I Upgrade?
+      readiness: Blockers
       plan: Upgrade Plan
+      history: Upgrade History
       probe: API Probe
     readiness:
-      title: Can I upgrade now?
+      title: Upgrade blockers
       subtitle: 'Every check the upgrade runs, at once. Read-only.'
       updated: 'Checked at {time}'
       checking: Checking...
@@ -1285,6 +1286,43 @@ harvester:
       why:
         summary: Why this order?
         text: 'Rancher decides it: the etcd init node first, then the other etcd nodes one at a time by machine name, then control-plane and worker nodes. Pausing a node stops the upgrade before that node; it cannot change the order. Memory figures are requests, as the scheduler counts them, against free memory now (approximate).'
+    history:
+      title: Upgrade history
+      subtitle: 'Past upgrades, from the records Harvester keeps. Read-only.'
+      none: No upgrade records.
+      show: Details
+      hide: Hide
+      imageGone: 'image deleted'
+      col:
+        started: Started
+        upgrade: Upgrade
+        source: Source
+        result: Result
+        nodes: Nodes
+        details: Details
+      source:
+        version: Version
+        iso: ISO image
+        unknown: '?'
+      result:
+        succeeded: Succeeded
+        failed: Failed
+        running: 'In progress ({state})'
+      d:
+        name: Record
+        iso: ISO
+        components: Contents
+        nodes: Nodes
+        options: Options
+        failures: Failures
+      option:
+        pauseMap: 'Paused nodes: {nodes}'
+        skipDetached: Skipped detached single-replica volumes
+        skipWebhook: Skipped the upgrade checks
+        logging: Logging on
+        singleNode: 'Single node: {node}'
+        none: Defaults
+      footnote: 'Harvester does not keep durations, logs or jobs after an upgrade; only these records.'
     drift:
       fresh:
         known: 'Fleet last tried at {last} ({outcome}); next try around {next}.'
@@ -1337,6 +1375,7 @@ harvester:
       goCheckerEnabled: Upgrade checker on/off
       goCheckerUrl: Upgrade checker URL
       goDashboard: Go to dashboard
+      goAirgapUpgrade: Upgrade from the ISO image
       copyFleetRetry: 'Retry now:'
       optionSkipDetached: 'Detached volumes: tick "Skip checking single-replica detached volumes" in the upgrade dialog.'
     check:
@@ -1356,6 +1395,7 @@ harvester:
         title: 'Version to upgrade to available'
         problem: 'No version to upgrade to'
         ok: '{count} version(s) offered.'
+        okIso: 'Uploaded ISO ready to upgrade from: {iso} (you run {current}).'
         why: 'You run {current} and no newer release is offered (upgrade checker: {checker}).'
         do: 'Check the upgrade checker settings, or add the release you want; then use Upgrade on the dashboard.'
       longhornDegraded:
