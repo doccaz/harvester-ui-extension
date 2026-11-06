@@ -1219,6 +1219,7 @@ harvester:
     nav:
       group: Upgrade Readiness
       readiness: Can I Upgrade?
+      plan: Upgrade Plan
       probe: API Probe
     readiness:
       title: Can I upgrade now?
@@ -1248,6 +1249,42 @@ harvester:
       stuckHint: 'The extra replica on {node} never finished rebuilding (Longhorn gave up after {retries} tries). It is not a usable copy, and Longhorn keeps retrying it. Delete that replica (the healthy copy stays). To report it to Longhorn, take a support bundle first.'
       openLonghorn: Open in Longhorn
       detached: detached
+    plan:
+      title: Upgrade plan
+      subtitle: 'The order the nodes will be upgraded in, one at a time. Read-only.'
+      changePause: Change pause settings
+      stepNo: 'Step {n}:'
+      mode:
+        auto: 'Automatic: each node is upgraded right after the previous one; the upgrade never waits for you.'
+        manual: 'Manual: the upgrade will wait before {n} node(s). Release each one with Resume in the upgrade dialog.'
+        running: 'Upgrade {upgrade} is running: it waits before {n} node(s) until you resume them.'
+      note:
+        readAtStart: 'Pause settings are read when the upgrade starts; changing them later does not affect a running upgrade.'
+        ignored: 'Not nodes of this cluster, ignored: {nodes}.'
+        runsUntil: 'The upgrade runs through {nodes} without stopping, then waits before {node}.'
+        singleNode: 'Single-node cluster: the node is upgraded in place; its VMs are stopped, not moved.'
+      services:
+        title: Cluster services
+        text: 'Harvester, KubeVirt and the system charts are upgraded first. There is no pause here.'
+      tag:
+        init: 'etcd init node: always first'
+        witness: witness
+        cp: control plane
+      gate:
+        waits: Waits for you
+        noStop: No stop
+        released: Released
+      label:
+        action: 'Action needed:'
+        risk: 'Risk:'
+      vms:
+        moving: 'Moves {n} VM(s), {gib} GiB, to {targets}.'
+        none: 'No VMs to move.'
+        staying: 'Shut down before this step (cannot live-migrate): {vms}.'
+        unplaced: 'Not enough free memory on {targets} for: {vms}. They may fail to migrate.'
+      why:
+        summary: Why this order?
+        text: 'Rancher decides it: the etcd init node first, then the other etcd nodes one at a time by machine name, then control-plane and worker nodes. Pausing a node stops the upgrade before that node; it cannot change the order. Memory figures are requests, as the scheduler counts them, against free memory now (approximate).'
     drift:
       fresh:
         known: 'Fleet last tried at {last} ({outcome}); next try around {next}.'

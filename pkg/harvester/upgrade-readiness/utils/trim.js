@@ -14,12 +14,39 @@ const meta = (o, keep = {}) => ({
 const cond = (o, type) => (o?.status?.conditions || []).find((c) => c.type === type) || null;
 const claimOf = (v) => v?.persistentVolumeClaim?.claimName || v?.dataVolume?.name || null;
 
+const UNITS = {
+  Ki: 2 ** 10, Mi: 2 ** 20, Gi: 2 ** 30, Ti: 2 ** 40, Pi: 2 ** 50, Ei: 2 ** 60, k: 1e3, K: 1e3, M: 1e6, G: 1e9, T: 1e12, P: 1e15, E: 1e18, m: 1e-3
+};
+
+/** Kubernetes quantity ("16Gi", "7021Mi", "128974848", "1.5G", "1e3") -> bytes; null when absent or unparsable. */
+export function parseBytes(q) {
+  if (q === undefined || q === null || q === '') {
+    return null;
+  }
+  const m = String(q).trim().match(/^([0-9.]+(?:[eE][-+]?[0-9]+)?)([a-zA-Z]{0,2})$/);
+
+  if (!m || (m[2] && !UNITS[m[2]])) {
+    return null;
+  }
+
+  return Number(m[1]) * (m[2] ? UNITS[m[2]] : 1);
+}
+
+/** Memory a pod requests the way the scheduler counts it: max(sum of containers, largest init container) + overhead. */
+export function podMemoryRequest(pod) {
+  const req = (c) => parseBytes(c?.resources?.requests?.memory) || 0;
+  const containers = (pod?.spec?.containers || []).reduce((a, c) => a + req(c), 0);
+  const init = Math.max(0, ...(pod?.spec?.initContainers || []).map(req));
+
+  return Math.max(containers, init) + (parseBytes(pod?.spec?.overhead?.memory) || 0);
+}
+
 export const TRIM = {
   nodes: (r) => list(r).map((n) => ({
     // Only the machine annotation: node annotations also carry RKE2 command-line args.
     metadata: { ...meta(n, { labels: true }), annotations: { 'cluster.x-k8s.io/machine': n?.metadata?.annotations?.['cluster.x-k8s.io/machine'] } },
     spec:     { unschedulable: !!n?.spec?.unschedulable },
-    status:   { ready: cond(n, 'Ready')?.status || 'Unknown' }
+    status:   { ready: cond(n, 'Ready')?.status || 'Unknown', allocatableMemory: parseBytes(n?.status?.allocatable?.memory) }
   })),
   upgrades: (r) => list(r).map((u) => ({
     metadata: {
@@ -101,6 +128,14 @@ export const TRIM = {
       }))
     },
     status: { nodeName: i?.status?.nodeName || '', phase: i?.status?.phase || '' }
+  })),
+  // Plan secrets hold join tokens: only their labels are kept (and the page asks the API for metadata only).
+  planSecrets: (r) => list(r).map((x) => ({ metadata: { name: x?.metadata?.name, labels: x?.metadata?.labels || {} } })),
+  pods:        (r) => list(r).filter((p) => !['Succeeded', 'Failed'].includes(p?.status?.phase) && p?.spec?.nodeName).map((p) => ({
+    namespace: p.metadata.namespace,
+    node:      p.spec.nodeName,
+    memory:    podMemoryRequest(p),
+    vm:        p.metadata.labels?.['kubevirt.io'] === 'virt-launcher' ? p.metadata.labels?.['vm.kubevirt.io/name'] || null : null
   })),
   k3sAddons: (r) => list(r).map((a) => ({ metadata: meta(a), spec: { source: a?.spec?.source || '' } })),
   vms:       (r) => list(r).map((v) => ({

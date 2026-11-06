@@ -20,3 +20,10 @@ export const SOURCES = {
   vmis:              `${ K8S }/apis/kubevirt.io/v1/virtualmachineinstances`,
   vms:               `${ K8S }/apis/kubevirt.io/v1/virtualmachines`
 };
+
+/** Read only by the plan page (heavier: every pod). Plan secrets are requested as metadata only (they hold join tokens). */
+export const METADATA_ONLY_HEADERS = { Accept: 'application/json;as=PartialObjectMetadataList;g=meta.k8s.io;v=v1,application/json' };
+export const EXTRA_SOURCES = {
+  planSecrets: { url: `${ K8S }/api/v1/namespaces/fleet-local/secrets?labelSelector=${ encodeURIComponent('rke.cattle.io/machine-name') }`, headers: METADATA_ONLY_HEADERS },
+  pods:        { url: `${ K8S }/api/v1/pods` }
+};

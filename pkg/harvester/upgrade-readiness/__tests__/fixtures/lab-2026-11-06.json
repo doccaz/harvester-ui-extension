@@ -1,6 +1,6 @@
 {
  "errors": {},
- "loadedAt": "2026-11-06T17:19:28.327Z",
+ "loadedAt": "2026-11-06T17:35:26.137Z",
  "nodes": [
   {
    "metadata": {
@@ -446,7 +446,8 @@
     "unschedulable": false
    },
    "status": {
-    "ready": "True"
+    "ready": "True",
+    "allocatableMemory": 98721529856
    }
   },
   {
@@ -900,7 +901,8 @@
     "unschedulable": false
    },
    "status": {
-    "ready": "True"
+    "ready": "True",
+    "allocatableMemory": 98767065088
    }
   },
   {
@@ -947,7 +949,8 @@
     "unschedulable": false
    },
    "status": {
-    "ready": "True"
+    "ready": "True",
+    "allocatableMemory": 16649228288
    }
   }
  ],
@@ -5663,23 +5666,1329 @@
    }
   }
  ],
+ "planSecrets": [
+  {
+   "metadata": {
+    "name": "custom-0610da1121f5-machine-plan",
+    "labels": {
+     "cluster.x-k8s.io/cluster-name": "local",
+     "harvesterhci.io/managed": "true",
+     "objectset.rio.cattle.io/hash": "587dc12fb177f63023ba7df184be7c883bd0479b",
+     "resources.cattle.io/backup": "true",
+     "rke.cattle.io/cluster-name": "local",
+     "rke.cattle.io/control-plane-role": "true",
+     "rke.cattle.io/etcd-role": "true",
+     "rke.cattle.io/machine-id": "e5ac4baf61c7471667e2a53578ac1597af112ac9e3ffa5b7c7af339de328f29",
+     "rke.cattle.io/machine-name": "custom-0610da1121f5",
+     "rke.cattle.io/node-name": "harv01lab",
+     "rke.cattle.io/worker-role": "true"
+    }
+   }
+  },
+  {
+   "metadata": {
+    "name": "custom-947cfec563ba-machine-plan",
+    "labels": {
+     "cluster.x-k8s.io/cluster-name": "local",
+     "harvesterhci.io/managed": "true",
+     "objectset.rio.cattle.io/hash": "f0bdafe4c6bd1580e17c64f1948b62dde1603003",
+     "resources.cattle.io/backup": "true",
+     "rke.cattle.io/cluster-name": "local",
+     "rke.cattle.io/etcd-role": "true",
+     "rke.cattle.io/init-node": "true",
+     "rke.cattle.io/machine-id": "0f1c9f716e896d196b9ce525c523095f87d9c895102c61908b5f487734248d3",
+     "rke.cattle.io/machine-name": "custom-947cfec563ba",
+     "rke.cattle.io/node-name": "harvlab-witness",
+     "rke.cattle.io/worker-role": "true"
+    }
+   }
+  },
+  {
+   "metadata": {
+    "name": "custom-f9fee6fbccfb-machine-plan",
+    "labels": {
+     "cluster.x-k8s.io/cluster-name": "local",
+     "harvesterhci.io/managed": "true",
+     "objectset.rio.cattle.io/hash": "435d40affde1a05971f0efce8b3c54f8281bd968",
+     "resources.cattle.io/backup": "true",
+     "rke.cattle.io/cluster-name": "local",
+     "rke.cattle.io/control-plane-role": "true",
+     "rke.cattle.io/etcd-role": "true",
+     "rke.cattle.io/machine-id": "5d7ac1d5d33f1c89a6fe087d4797fe8f1eecac458355d113df60624518e2a4c",
+     "rke.cattle.io/machine-name": "custom-f9fee6fbccfb",
+     "rke.cattle.io/node-name": "harv02lab",
+     "rke.cattle.io/worker-role": "true"
+    }
+   }
+  }
+ ],
+ "pods": [
+  {
+   "namespace": "cattle-capi-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-fleet-local-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-fleet-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-fleet-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-fleet-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-fleet-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-logging-system",
+   "node": "harv02lab",
+   "memory": 20971520,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-logging-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-logging-system",
+   "node": "harv02lab",
+   "memory": 209715200,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-logging-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-logging-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-logging-system",
+   "node": "harv02lab",
+   "memory": 52428800,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-logging-system",
+   "node": "harvlab-witness",
+   "memory": 52428800,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-logging-system",
+   "node": "harv01lab",
+   "memory": 52428800,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-logging-system",
+   "node": "harv02lab",
+   "memory": 209715200,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-monitoring-system",
+   "node": "harv02lab",
+   "memory": 104857600,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-monitoring-system",
+   "node": "harv02lab",
+   "memory": 33554432,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-monitoring-system",
+   "node": "harv02lab",
+   "memory": 1835008000,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-monitoring-system",
+   "node": "harv02lab",
+   "memory": 209715200,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-monitoring-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-monitoring-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-monitoring-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-monitoring-system",
+   "node": "harvlab-witness",
+   "memory": 31457280,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-monitoring-system",
+   "node": "harv02lab",
+   "memory": 31457280,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-monitoring-system",
+   "node": "harv01lab",
+   "memory": 31457280,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cattle-turtles-system",
+   "node": "harv02lab",
+   "memory": 134217728,
+   "vm": null
+  },
+  {
+   "namespace": "cert-manager",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cert-manager",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cert-manager",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "cloudcasa-io",
+   "node": "harv02lab",
+   "memory": 67108864,
+   "vm": null
+  },
+  {
+   "namespace": "cloudcasa-io",
+   "node": "harv01lab",
+   "memory": 134217728,
+   "vm": null
+  },
+  {
+   "namespace": "cloudflare",
+   "node": "harv02lab",
+   "memory": 67108864,
+   "vm": null
+  },
+  {
+   "namespace": "cloudflare",
+   "node": "harv02lab",
+   "memory": 67108864,
+   "vm": null
+  },
+  {
+   "namespace": "default",
+   "node": "harv02lab",
+   "memory": 104857600,
+   "vm": null
+  },
+  {
+   "namespace": "default",
+   "node": "harv01lab",
+   "memory": 62914560,
+   "vm": null
+  },
+  {
+   "namespace": "default",
+   "node": "harv02lab",
+   "memory": 62914560,
+   "vm": null
+  },
+  {
+   "namespace": "default",
+   "node": "harvlab-witness",
+   "memory": 62914560,
+   "vm": null
+  },
+  {
+   "namespace": "default",
+   "node": "harv01lab",
+   "memory": 134217728,
+   "vm": null
+  },
+  {
+   "namespace": "default",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "forklift",
+   "node": "harv02lab",
+   "memory": 157286400,
+   "vm": null
+  },
+  {
+   "namespace": "forklift",
+   "node": "harv02lab",
+   "memory": 891289600,
+   "vm": null
+  },
+  {
+   "namespace": "forklift",
+   "node": "harv02lab",
+   "memory": 52428800,
+   "vm": null
+  },
+  {
+   "namespace": "forklift",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "forklift",
+   "node": "harv02lab",
+   "memory": 67108864,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 157286400,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 157286400,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 157286400,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 157286400,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv01lab",
+   "memory": 268435456,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 268435456,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 67108864,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 134217728,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 67108864,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv01lab",
+   "memory": 67108864,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 67108864,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv01lab",
+   "memory": 67108864,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 67108864,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv01lab",
+   "memory": 67108864,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 67108864,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harvlab-witness",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harvlab-witness",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harvlab-witness",
+   "memory": 67108864,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv01lab",
+   "memory": 209715200,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 209715200,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 262144000,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 2147483648,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 67108864,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 524288000,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv01lab",
+   "memory": 524288000,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 288358400,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 288358400,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv01lab",
+   "memory": 340787200,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 340787200,
+   "vm": null
+  },
+  {
+   "namespace": "harvester-system",
+   "node": "harv02lab",
+   "memory": 268435456,
+   "vm": null
+  },
+  {
+   "namespace": "kasten-io",
+   "node": "harv02lab",
+   "memory": 188743680,
+   "vm": null
+  },
+  {
+   "namespace": "kasten-io",
+   "node": "harv02lab",
+   "memory": 125829120,
+   "vm": null
+  },
+  {
+   "namespace": "kasten-io",
+   "node": "harv02lab",
+   "memory": 996147200,
+   "vm": null
+  },
+  {
+   "namespace": "kasten-io",
+   "node": "harv02lab",
+   "memory": 167772160,
+   "vm": null
+  },
+  {
+   "namespace": "kasten-io",
+   "node": "harv02lab",
+   "memory": 524288000,
+   "vm": null
+  },
+  {
+   "namespace": "kasten-io",
+   "node": "harv02lab",
+   "memory": 304087040,
+   "vm": null
+  },
+  {
+   "namespace": "kasten-io",
+   "node": "harv02lab",
+   "memory": 167772160,
+   "vm": null
+  },
+  {
+   "namespace": "kasten-io",
+   "node": "harv02lab",
+   "memory": 167772160,
+   "vm": null
+  },
+  {
+   "namespace": "kasten-io",
+   "node": "harv02lab",
+   "memory": 167772160,
+   "vm": null
+  },
+  {
+   "namespace": "kasten-io",
+   "node": "harv02lab",
+   "memory": 41943040,
+   "vm": null
+  },
+  {
+   "namespace": "kasten-io",
+   "node": "harv02lab",
+   "memory": 314572800,
+   "vm": null
+  },
+  {
+   "namespace": "kasten-io",
+   "node": "harv02lab",
+   "memory": 125829120,
+   "vm": null
+  },
+  {
+   "namespace": "kasten-io",
+   "node": "harv02lab",
+   "memory": 104857600,
+   "vm": null
+  },
+  {
+   "namespace": "kasten-io",
+   "node": "harv02lab",
+   "memory": 125829120,
+   "vm": null
+  },
+  {
+   "namespace": "kasten-io",
+   "node": "harv02lab",
+   "memory": 178257920,
+   "vm": null
+  },
+  {
+   "namespace": "kasten-io",
+   "node": "harv02lab",
+   "memory": 262144000,
+   "vm": null
+  },
+  {
+   "namespace": "kasten-io",
+   "node": "harv02lab",
+   "memory": 262144000,
+   "vm": null
+  },
+  {
+   "namespace": "keycloak",
+   "node": "harv02lab",
+   "memory": 1782579200,
+   "vm": null
+  },
+  {
+   "namespace": "keycloak",
+   "node": "harv02lab",
+   "memory": 1782579200,
+   "vm": null
+  },
+  {
+   "namespace": "keycloak",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 134217728,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 134217728,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harvlab-witness",
+   "memory": 134217728,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 268435456,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 536870912,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 536870912,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harvlab-witness",
+   "memory": 536870912,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 104857600,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 104857600,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 1073741824,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 1073741824,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 268435456,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 268435456,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harvlab-witness",
+   "memory": 104857600,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 104857600,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 104857600,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 209715200,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 209715200,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 209715200,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 104857600,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harvlab-witness",
+   "memory": 104857600,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 104857600,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 134217728,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 134217728,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harvlab-witness",
+   "memory": 134217728,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 134217728,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 134217728,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 67108864,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 67108864,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 209715200,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 209715200,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harvlab-witness",
+   "memory": 209715200,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 209715200,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 209715200,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harvlab-witness",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 134217728,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 134217728,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 16777216,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 94371840,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 94371840,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 209715200,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harvlab-witness",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "kube-system",
+   "node": "harv02lab",
+   "memory": 104857600,
+   "vm": null
+  },
+  {
+   "namespace": "labs",
+   "node": "harv01lab",
+   "memory": 2000000,
+   "vm": null
+  },
+  {
+   "namespace": "labs",
+   "node": "harv02lab",
+   "memory": 2000000,
+   "vm": null
+  },
+  {
+   "namespace": "labs",
+   "node": "harv01lab",
+   "memory": 2000000,
+   "vm": null
+  },
+  {
+   "namespace": "labs",
+   "node": "harv02lab",
+   "memory": 7893228729,
+   "vm": "downstream-01"
+  },
+  {
+   "namespace": "labs",
+   "node": "harv01lab",
+   "memory": 17739809241,
+   "vm": "downstream-02"
+  },
+  {
+   "namespace": "labs",
+   "node": "harv01lab",
+   "memory": 7893228729,
+   "vm": "downstream-03"
+  },
+  {
+   "namespace": "labs",
+   "node": "harv01lab",
+   "memory": 10735321256,
+   "vm": "gpu-node"
+  },
+  {
+   "namespace": "labs",
+   "node": "harv02lab",
+   "memory": 20200665401,
+   "vm": "rancher-host-2"
+  },
+  {
+   "namespace": "labs",
+   "node": "harv01lab",
+   "memory": 10355136512,
+   "vm": "rancher-host-3"
+  },
+  {
+   "namespace": "labs",
+   "node": "harv02lab",
+   "memory": 23482858904,
+   "vm": "rancher-host"
+  },
+  {
+   "namespace": "labs",
+   "node": "harv02lab",
+   "memory": 6177160640,
+   "vm": "rancher-lb"
+  },
+  {
+   "namespace": "labs",
+   "node": "harv01lab",
+   "memory": 3330275713,
+   "vm": "sles16-01"
+  },
+  {
+   "namespace": "labs",
+   "node": "harv01lab",
+   "memory": 10355136512,
+   "vm": "smlm-prod"
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv01lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "longhorn-system",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  },
+  {
+   "namespace": "techday",
+   "node": "harv02lab",
+   "memory": 134217728,
+   "vm": null
+  },
+  {
+   "namespace": "techday",
+   "node": "harv02lab",
+   "memory": 134217728,
+   "vm": null
+  },
+  {
+   "namespace": "techday",
+   "node": "harv02lab",
+   "memory": 134217728,
+   "vm": null
+  },
+  {
+   "namespace": "vm-import-ui",
+   "node": "harv02lab",
+   "memory": 0,
+   "vm": null
+  }
+ ],
  "kubelet": {
   "harv01lab": {
-   "usedBytes": 134176550912,
+   "usedBytes": 134187458560,
    "capacityBytes": 368766496768,
    "gcHigh": 85
   },
   "harv02lab": {
-   "usedBytes": 148589215744,
+   "usedBytes": 148575334400,
    "capacityBytes": 210241560576,
    "gcHigh": 85
   },
   "harvlab-witness": {
-   "usedBytes": 33231081472,
+   "usedBytes": 33222778880,
    "capacityBytes": 712803852288,
    "gcHigh": 85
   }
  },
  "certNotAfter": "2027-04-30T19:15:43.000Z",
- "now": 1793985568327
+ "now": 1793986526137
 }

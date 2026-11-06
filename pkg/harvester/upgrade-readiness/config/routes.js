@@ -1,4 +1,5 @@
 import ReadinessPage from '../pages/readiness.vue';
+import PlanPage from '../pages/plan.vue';
 import ProbePage from '../pages/probe.vue';
 import { PAGES } from './names';
 
@@ -8,5 +9,6 @@ const page = (p, component) => ({
 
 export const upgradeReadinessRoutes = [
   page(PAGES.readiness, ReadinessPage),
+  page(PAGES.plan, PlanPage),
   page(PAGES.probe, ProbePage)
 ];

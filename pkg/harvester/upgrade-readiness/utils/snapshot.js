@@ -1,5 +1,5 @@
 import { TRIM, trimKubelet } from './trim';
-import { K8S, SOURCES } from './sources';
+import { EXTRA_SOURCES, K8S, SOURCES } from './sources';
 import { apiPath, describeLive, objKey, patchPaths } from './drift';
 
 /**
@@ -14,12 +14,16 @@ const errText = (e) => `${ e?._status || e?.status || e?.response?.status || '' 
  * @param request   `clusterRequest(store)`
  * @param certNotAfter async () => ISO date of the serving cert, or throws (the page uses the shell's Secret model, which parses X.509)
  */
-export async function loadSnapshot(request, certNotAfter) {
+export async function loadSnapshot(request, certNotAfter, { extra = [] } = {}) {
   const snap = { errors: {}, loadedAt: new Date().toISOString() };
+  const sources = [
+    ...Object.entries(SOURCES).map(([key, url]) => [key, { url }]),
+    ...extra.map((key) => [key, EXTRA_SOURCES[key]])
+  ];
 
-  await Promise.all(Object.entries(SOURCES).map(async([key, url]) => {
+  await Promise.all(sources.map(async([key, { url, headers }]) => {
     try {
-      snap[key] = TRIM[key](await request({ url }));
+      snap[key] = TRIM[key](await request({ url, headers }));
     } catch (e) {
       snap.errors[key] = errText(e);
     }
