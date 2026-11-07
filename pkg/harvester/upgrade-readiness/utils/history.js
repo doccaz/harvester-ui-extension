@@ -35,6 +35,16 @@ function resultOf(u) {
   return 'running';
 }
 
+/**
+ * A plain explanation for failures whose message alone does not say what to do.
+ * `virtualmachineimages... "x" not found`: the ISO was gone when the upgrade started. Harvester deletes the upgrade's ISO
+ * whenever an upgrade ends (v1.8.2 upgrade_repo.go Cleanup -> deleteVM -> deleteImage), so retrying with it needs a new upload.
+ */
+export function failureHint(c) {
+  // The controller puts this error in `reason`, with an empty message (lab, 2026-11-07).
+  return /virtualmachineimages[^"]*"[^"]+" not found/.test(`${ c.message || '' } ${ c.reason || '' }`) ? 'isoDeleted' : '';
+}
+
 export function historyRows(upgrades = [], images = []) {
   const imageById = Object.fromEntries(images.map((i) => [`${ i.metadata.namespace }/${ i.metadata.name }`, i]));
 
@@ -77,7 +87,9 @@ export function historyRows(upgrades = [], images = []) {
       nodes:      Object.entries(u.status.nodeStatuses || {}).map(([name, st]) => ({
         name, state: st.state || '', reason: st.reason || '', message: st.message || ''
       })),
-      failures:   (u.status.conditions || []).filter((c) => c.status === 'False' && (c.message || c.reason)).map((c) => ({ type: c.type, text: c.message || c.reason })),
+      failures:   (u.status.conditions || []).filter((c) => c.status === 'False' && (c.message || c.reason)).map((c) => ({
+        type: c.type, text: c.message || c.reason, ...(failureHint(c) ? { hint: failureHint(c) } : {})
+      })),
       components: {
         kubernetes: repo.kubernetes || '', rancher: repo.rancher || '', os: repo.os || ''
       },

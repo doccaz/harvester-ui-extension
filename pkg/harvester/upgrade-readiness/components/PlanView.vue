@@ -134,6 +134,18 @@ const jobState = (j) => (j.failed ? 'failed' : (j.succeeded ? 'succeeded' : (j.a
         >
           {{ k(`live.phase.${ ph.key }`) }}: {{ ph.message }}
         </p>
+        <p
+          v-if="live.repo"
+          class="problem"
+        >
+          {{ k(`live.repo.${ live.repo.key }`, { image: live.repo.image, backend: live.repo.backend, waiting: live.repo.waiting.join('; ') }) }}
+        </p>
+        <p
+          v-if="live.repo && live.repo.key === 'notCdi' && live.repo.waiting.length"
+          class="evidence"
+        >
+          {{ live.repo.waiting.join('; ') }}
+        </p>
       </div>
       <ChangesSwitch v-if="live" />
       <div
@@ -434,6 +446,7 @@ const jobState = (j) => (j.failed ? 'failed' : (j.succeeded ? 'succeeded' : (j.a
 .live-state { margin-right: 6px; border-color: var(--info); font-weight: 600; &.done { border-color: var(--success); } &.failed { border-color: var(--error); } &.paused { border-color: var(--warning); } }
 .copy { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; code { padding: 2px 6px; } }
 .problem { padding-left: 8px; border-left: 3px solid var(--error); &.warn { border-left-color: var(--warning); } }
+.evidence { padding-left: 11px; font-family: monospace; font-size: 12px; color: var(--input-label); }
 .stop-hint { padding-left: 11px; margin-top: -4px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 </style>

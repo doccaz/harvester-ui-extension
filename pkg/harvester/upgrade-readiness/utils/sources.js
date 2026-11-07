@@ -29,5 +29,7 @@ export const METADATA_ONLY_HEADERS = { Accept: 'application/json;as=PartialObjec
 export const EXTRA_SOURCES = {
   planSecrets: { url: `${ K8S }/api/v1/namespaces/fleet-local/secrets?labelSelector=${ encodeURIComponent('rke.cattle.io/machine-name') }`, headers: METADATA_ONLY_HEADERS },
   pods:        { url: `${ K8S }/api/v1/pods` },
-  jobs:        { url: `${ K8S }/apis/batch/v1/namespaces/harvester-system/jobs?labelSelector=${ encodeURIComponent('harvesterhci.io/upgradeJobType') }` }
+  jobs:        { url: `${ K8S }/apis/batch/v1/namespaces/harvester-system/jobs?labelSelector=${ encodeURIComponent('harvesterhci.io/upgradeJobType') }` },
+  // The upgrade repo's pods (Deployment made by upgrade_repo.go CreateDeployment). Unscheduled pods included: `pods` drops them.
+  repoPods:    { url: `${ K8S }/api/v1/namespaces/harvester-system/pods?labelSelector=${ encodeURIComponent('harvesterhci.io/upgradeComponent=repo') }` }
 };

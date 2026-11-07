@@ -1,0 +1,54 @@
+{
+ "items": [
+  {
+   "metadata": {
+    "name": "upgrade-repo-hvst-upgrade-kflcl-85bbd4c867-5ml74",
+    "namespace": "harvester-system",
+    "labels": {
+     "harvesterhci.io/upgrade": "hvst-upgrade-kflcl",
+     "harvesterhci.io/upgradeComponent": "repo",
+     "pod-template-hash": "85bbd4c867"
+    }
+   },
+   "status": {
+    "phase": "Pending",
+    "conditions": [
+     {
+      "lastProbeTime": null,
+      "lastTransitionTime": "2026-11-07T20:36:08Z",
+      "message": "0/3 nodes are available: persistentvolumeclaim \"image-78wgm\" not found. not found",
+      "observedGeneration": 1,
+      "reason": "Unschedulable",
+      "status": "False",
+      "type": "PodScheduled"
+     }
+    ]
+   }
+  },
+  {
+   "metadata": {
+    "name": "upgrade-repo-hvst-upgrade-kflcl-85bbd4c867-pxr7k",
+    "namespace": "harvester-system",
+    "labels": {
+     "harvesterhci.io/upgrade": "hvst-upgrade-kflcl",
+     "harvesterhci.io/upgradeComponent": "repo",
+     "pod-template-hash": "85bbd4c867"
+    }
+   },
+   "status": {
+    "phase": "Pending",
+    "conditions": [
+     {
+      "lastProbeTime": null,
+      "lastTransitionTime": "2026-11-07T20:36:08Z",
+      "message": "0/3 nodes are available: persistentvolumeclaim \"image-78wgm\" not found. not found",
+      "observedGeneration": 1,
+      "reason": "Unschedulable",
+      "status": "False",
+      "type": "PodScheduled"
+     }
+    ]
+   }
+  }
+ ]
+}

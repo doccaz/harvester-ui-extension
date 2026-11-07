@@ -1302,6 +1302,9 @@ harvester:
           done: 'Upgraded.'
           failed: 'Failed: {message}'
           other: '{message}'
+        repo:
+          notCdi: 'Repository will not start: the ISO {image} is a {backend} image; the upgrade needs a cdi image. Delete this upgrade, create the image again as cdi, and start a new upgrade.'
+          podsWaiting: 'Repository is waiting: {waiting}'
       changePause: Change pause settings
       pauseInfo: About pause settings
       stepNo: 'Step {n}:'
@@ -1375,6 +1378,8 @@ harvester:
         logging: Logging on
         singleNode: 'Single node: {node}'
         none: Defaults
+      hint:
+        isoDeleted: 'The ISO image was already deleted: Harvester deletes it whenever an upgrade ends. Upload it again (as a cdi image) before retrying.'
       footnote: 'Harvester does not keep durations, logs or jobs after an upgrade; only these records.'
       footnoteLabel: What is kept
     changes:
@@ -1469,6 +1474,7 @@ harvester:
       goDashboard: Go to dashboard
       goAirgapUpgrade: Upgrade from the ISO image
       copyFleetRetry: 'Retry now:'
+      copyCdiImage: 'Image as the upgrade needs it (fill in URL and checksum):'
       optionSkipDetached: 'Detached volumes: tick "Skip checking single-replica detached volumes" in the upgrade dialog.'
     check:
       etcdHealth:
@@ -1483,6 +1489,12 @@ harvester:
         ok: 'No VM migration failed in the last 7 days (KubeVirt keeps only recent migrations).'
         why: 'The upgrade moves VMs the same way; whatever made these fail can stall the upgrade.'
         do: 'Look at why they failed (often not enough memory on the target node) and fix it first.'
+      isoBackend:
+        title: 'Uploaded ISO usable for an upgrade'
+        problem: 'Uploaded ISO cannot be used for an upgrade'
+        ok: 'Uploaded upgrade ISOs are cdi images.'
+        why: 'The upgrade mounts the ISO as a volume, which only cdi images have. The upgrade check accepts other images; the upgrade then waits at "Repository" forever. Harvester also deletes the ISO whenever an upgrade ends.'
+        do: 'Delete the image and create it again with backend cdi (the Upgrade page upload does this).'
       memoryHeadroom:
         title: 'Enough memory to empty each node'
         problem: 'Not enough memory to empty a node'

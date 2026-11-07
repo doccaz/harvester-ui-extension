@@ -84,12 +84,41 @@ export function liveStatus(snap) {
     };
   });
 
+  const phases = phaseStatus(upgrade);
+
   return {
-    name:   upgrade.metadata.name,
-    state:  upgrade.metadata.labels?.['harvesterhci.io/upgradeState'] || '',
-    to:     upgrade.spec.version || '',
-    phases: phaseStatus(upgrade),
+    name:  upgrade.metadata.name,
+    state: upgrade.metadata.labels?.['harvesterhci.io/upgradeState'] || '',
+    to:    upgrade.spec.version || '',
+    phases,
+    repo:  repoProblem(upgrade, phases, snap),
     nodes
+  };
+}
+
+/**
+ * Why "Repository" does not finish (the stock dialog only says Pending). The repo Deployment mounts the upgrade image as a
+ * PVC named after the image (harvester v1.8.2 upgrade_repo.go CreateDeployment, `ClaimName: vmImage.Name`); only a `cdi`
+ * image has one (images the upgrade makes itself are cdi, CreateImageFromISO). An uploaded ISO with another backend is
+ * accepted by the webhook, then the repo pods stay Pending forever. Null when the step is done or nothing is known.
+ */
+export function repoProblem(upgrade, phases, snap) {
+  if (phases.find((p) => p.key === 'RepoReady')?.status === 'done') {
+    return null;
+  }
+  const image = upgrade.spec.image ? (snap.images || []).find((i) => `${ i.metadata.namespace }/${ i.metadata.name }` === upgrade.spec.image) : null;
+  const waiting = [...new Set((snap.repoPods || []).filter((p) => p.upgrade === upgrade.metadata.name && p.waitingOn).map((p) => p.waitingOn))];
+  const notCdi = !!image && !!image.spec.backend && image.spec.backend !== 'cdi';
+
+  if (!notCdi && !waiting.length) {
+    return null;
+  }
+
+  return {
+    key:     notCdi ? 'notCdi' : 'podsWaiting',
+    image:   image ? image.spec.displayName || image.metadata.name : upgrade.spec.image,
+    backend: image?.spec.backend || '',
+    waiting
   };
 }
 

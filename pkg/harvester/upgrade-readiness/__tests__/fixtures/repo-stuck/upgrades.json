@@ -1,0 +1,89 @@
+{
+ "items": [
+  {
+   "apiVersion": "harvesterhci.io/v1beta1",
+   "kind": "Upgrade",
+   "metadata": {
+    "name": "hvst-upgrade-kflcl",
+    "namespace": "harvester-system",
+    "labels": {
+     "harvesterhci.io/latestUpgrade": "true",
+     "harvesterhci.io/upgradeState": "PreparingRepo"
+    },
+    "annotations": {
+     "harvesterhci.io/skipSingleReplicaDetachedVol": "true"
+    },
+    "creationTimestamp": "2026-11-07T20:35:54Z"
+   },
+   "spec": {
+    "image": "harvester-system/image-78wgm",
+    "logEnabled": true,
+    "version": ""
+   },
+   "status": {
+    "conditions": [
+     {
+      "status": "Unknown",
+      "type": "Completed"
+     },
+     {
+      "lastUpdateTime": "2026-11-07T20:36:08Z",
+      "status": "True",
+      "type": "LogReady"
+     },
+     {
+      "lastUpdateTime": "2026-11-07T20:36:08Z",
+      "status": "True",
+      "type": "ImageReady"
+     },
+     {
+      "status": "Unknown",
+      "type": "RepoReady"
+     }
+    ],
+    "imageID": "harvester-system/image-78wgm",
+    "previousVersion": "v1.8.2",
+    "upgradeLog": "hvst-upgrade-kflcl-upgradelog"
+   }
+  },
+  {
+   "apiVersion": "harvesterhci.io/v1beta1",
+   "kind": "Upgrade",
+   "metadata": {
+    "name": "hvst-upgrade-cr6jv",
+    "namespace": "harvester-system",
+    "labels": {
+     "harvesterhci.io/upgradeCleanup": "Succeeded",
+     "harvesterhci.io/upgradeState": "Failed"
+    },
+    "annotations": {
+     "harvesterhci.io/longhorn-settings-restored": "true",
+     "harvesterhci.io/skipSingleReplicaDetachedVol": "true"
+    },
+    "creationTimestamp": "2026-11-07T20:27:42Z"
+   },
+   "spec": {
+    "image": "harvester-system/image-fmk9h",
+    "logEnabled": true,
+    "version": ""
+   },
+   "status": {
+    "conditions": [
+     {
+      "lastUpdateTime": "2026-11-07T20:28:10Z",
+      "reason": "virtualmachineimages.harvesterhci.io \"image-fmk9h\" not found",
+      "status": "False",
+      "type": "Completed"
+     },
+     {
+      "lastUpdateTime": "2026-11-07T20:28:10Z",
+      "status": "True",
+      "type": "LogReady"
+     }
+    ],
+    "previousVersion": "v1.8.2",
+    "upgradeLog": "hvst-upgrade-cr6jv-upgradelog"
+   }
+  }
+ ]
+}

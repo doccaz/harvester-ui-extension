@@ -160,10 +160,26 @@ export const TRIM = {
     memory:    podMemoryRequest(p),
     vm:        p.metadata.labels?.['kubevirt.io'] === 'virt-launcher' ? p.metadata.labels?.['vm.kubevirt.io/name'] || null : null
   })),
-  // Only Harvester release ISOs (upgrade sources); other images are not needed.
-  images: (r) => list(r).filter((i) => /^harvester-v.*\.iso$/i.test(i?.spec?.displayName || '')).map((i) => ({
-    metadata: meta(i), spec: { displayName: i.spec.displayName }, status: { progress: i?.status?.progress ?? null }
+  // Only upgrade sources: Harvester release ISOs and images marked as upgrade images; other images are not needed.
+  // `backend`: the upgrade repo mounts the image as a PVC, which only the `cdi` backend creates (see checks.js isoBackend).
+  images: (r) => list(r).filter((i) => /^harvester-v.*\.iso$/i.test(i?.spec?.displayName || '') || i?.metadata?.annotations?.['harvesterhci.io/os-upgrade-image'] === 'True').map((i) => ({
+    metadata: meta(i),
+    spec:     {
+      displayName: i.spec.displayName, backend: i?.spec?.backend || '', storageClass: i?.spec?.targetStorageClassName || ''
+    },
+    status: { progress: i?.status?.progress ?? null }
   })),
+  repoPods: (r) => list(r).map((p) => {
+    const sched = cond(p, 'PodScheduled');
+
+    return {
+      name:      p?.metadata?.name,
+      upgrade:   p?.metadata?.labels?.['harvesterhci.io/upgrade'] || '',
+      phase:     p?.status?.phase || '',
+      // Why it cannot start, e.g. `persistentvolumeclaim "image-x" not found`.
+      waitingOn: sched && sched.status === 'False' ? sched.message || sched.reason || '' : ''
+    };
+  }),
   etcdPods: (r) => list(r).map((p) => ({
     node:     p?.spec?.nodeName || '',
     ready:    (p?.status?.conditions || []).find((c) => c.type === 'Ready')?.status === 'True',

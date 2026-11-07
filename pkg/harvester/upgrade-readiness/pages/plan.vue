@@ -19,7 +19,7 @@ const k = (key, args) => t(`harvester.upgradeReadiness.plan.${ key }`, args);
 async function refresh() {
   loading.value = true;
   try {
-    snap.value = await loadSnapshot(clusterRequest(store), async() => null, { extra: ['planSecrets', 'pods', 'jobs'] });
+    snap.value = await loadSnapshot(clusterRequest(store), async() => null, { extra: ['planSecrets', 'pods', 'jobs', 'repoPods'] });
   } finally {
     loading.value = false;
   }

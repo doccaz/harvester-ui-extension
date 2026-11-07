@@ -99,7 +99,7 @@ const CHECKS = {
     const checker = s.checkerEnabled ? setting(s.checkerEnabled) !== 'false' : null;
     // An uploaded Harvester ISO newer than the running version is an upgrade source too (the "upgrade from image" page).
     const isos = (s.images || []).map((i) => ({ image: i, version: isoVersion(i.spec.displayName) }))
-      .filter((x) => x.version && compareVersions(x.version, current) > 0 && (x.image.status.progress === null || x.image.status.progress >= 100))
+      .filter((x) => x.version && compareVersions(x.version, current) > 0 && (x.image.status.progress === null || x.image.status.progress >= 100) && !wrongBackend(x.image))
       .sort((a, b) => compareVersions(b.version, a.version));
     const ready = s.versions.length > 0 || isos.length > 0;
 
@@ -374,6 +374,27 @@ const CHECKS = {
     });
   }),
 
+  // An uploaded ISO must be a `cdi` image: the upgrade repo mounts it as a PVC that only cdi images have (live.js repoProblem).
+  // The webhook does not check this; the upgrade then waits at "Repository" forever. Harvester also deletes the upgrade's
+  // ISO whenever an upgrade ends, succeeded, failed or deleted (v1.8.2 upgrade_repo.go Cleanup -> deleteVM -> deleteImage).
+  isoBackend: (s) => guarded('isoBackend', s, ['images'], () => {
+    const current = s.serverVersion ? (s.serverVersion.value || s.serverVersion.default || '') : '';
+    const newer = s.images.filter((i) => {
+      const v = isoVersion(i.spec.displayName);
+
+      return !current || !v || compareVersions(v, current) > 0;
+    });
+    const bad = newer.filter(wrongBackend);
+
+    return result('isoBackend', bad.length ? 'warn' : 'pass', {
+      items: (bad.length ? bad : newer).map((i) => ({ text: i.spec.displayName || i.metadata.name, note: `${ i.metadata.namespace }/${ i.metadata.name }, backend ${ i.spec.backend || '?' }` })),
+      fixes: bad.length ? [{
+        kind: 'copy', labelKey: 'copyCdiImage', command: cdiImageYaml(bad[0])
+      }] : [],
+      advisory: true
+    });
+  }),
+
   memoryHeadroom: (s) => guarded('memoryHeadroom', s, ['nodes', 'pods', 'vmis'], () => {
     const stay = new Set(nonWitness(s.nodes).length > 1 ? nonMigratableItems(s).map((i) => i.text) : []);
     const load = moveLoad(s.nodes, s.pods, stay);
@@ -395,6 +416,30 @@ const CHECKS = {
 /** `nvidia.com/GB205_GEFORCE_RTX_5070` -> `GB205 GEFORCE RTX 5070` (the device plugin's resource name, readable). */
 export function deviceName(resource) {
   return String(resource || '').split('/').pop().replace(/_/g, ' ');
+}
+
+/** An image the upgrade repo cannot mount (not `cdi`). Empty backend = unknown, not flagged. */
+export const wrongBackend = (image) => !!image?.spec?.backend && image.spec.backend !== 'cdi';
+
+/** A VirtualMachineImage the upgrade can use, the way the upgrade itself makes one (upgrade_repo.go CreateImageFromISO). */
+export function cdiImageYaml(image) {
+  return [
+    'apiVersion: harvesterhci.io/v1beta1',
+    'kind: VirtualMachineImage',
+    'metadata:',
+    '  generateName: image-',
+    '  namespace: harvester-system',
+    '  annotations:',
+    '    harvesterhci.io/os-upgrade-image: "True"',
+    'spec:',
+    '  backend: cdi',
+    '  targetStorageClassName: longhorn-static',
+    `  displayName: ${ image?.spec?.displayName || 'harvester-vX.Y.Z-amd64.iso' }`,
+    '  sourceType: download',
+    '  url: <URL of the ISO>',
+    '  checksum: <sha512 of the ISO>',
+    ''
+  ].join('\n');
 }
 
 /** `harvester-v1.9.0-amd64.iso` -> `v1.9.0` */

@@ -11,7 +11,7 @@ describe('pre-flight checks on the lab snapshot (2026-11-06, after the kube-vip 
 
   it('matches hack/preflight.py: single-replica and GPU VM block, the rest passes', () => {
     expect(verdict(Object.values(r))).toStrictEqual({
-      block: 2, warn: 1, unknown: 0, pass: 16, skip: 0
+      block: 2, warn: 1, unknown: 0, pass: 17, skip: 0
     });
     expect(r.singleReplica.status).toBe('block');
     expect(r.nonMigratable.status).toBe('block');

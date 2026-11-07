@@ -160,7 +160,15 @@ onMounted(refresh);
                 <dd>{{ r.options.map((o) => k(`option.${ o.key }`, o.args)).join(' · ') || k('option.none') }}</dd>
                 <template v-if="r.failures.length">
                   <dt>{{ k('d.failures') }}</dt>
-                  <dd>{{ r.failures.map((f) => `${ f.type }: ${ f.text }`).join('; ') }}</dd>
+                  <dd>
+                    {{ r.failures.map((f) => `${ f.type }: ${ f.text }`).join('; ') }}
+                    <template
+                      v-for="h in [...new Set(r.failures.map((f) => f.hint).filter(Boolean))]"
+                      :key="h"
+                    >
+                      <br>{{ k(`hint.${ h }`) }}
+                    </template>
+                  </dd>
                 </template>
               </dl>
             </td>

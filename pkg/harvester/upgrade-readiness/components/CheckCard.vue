@@ -253,7 +253,7 @@ function details(item) {
               class="copy"
             >
               <span>{{ t(`harvester.upgradeReadiness.fix.${ f.labelKey }`) }}</span>
-              <code>{{ f.command }}</code>
+              <code :class="{ block: f.command.includes('\n') }">{{ f.command }}</code>
               <CopyToClipboard
                 :text="f.command"
                 class="btn-sm"
@@ -307,7 +307,7 @@ function details(item) {
 }
 .do { font-weight: 600; }
 .fixes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.copy { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; code { padding: 2px 6px; } }
+.copy { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; code { padding: 2px 6px; } code.block { display: block; white-space: pre; overflow-x: auto; max-width: 100%; } }
 .option { margin: 4px 0; padding: 6px 10px; border-left: 3px solid var(--info); width: 100%; }
 .more { padding-left: 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
